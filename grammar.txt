@@ -1,0 +1,65 @@
+Program  ::= TTurtle TIdent VarDecBlock FunDecBlock CompoundStatement
+
+VarDecBlock ::= VarDec VarDecBlock 
+              | <empty>
+
+VarDec ::= TVar TIdent
+         | TVar Assignment
+
+Assignment ::= TIdent TEq TExpr
+
+//Make precedence happen with bison magic
+Expr ::= (Expr) 
+       |  -Expr 
+       | Expr + Expr 
+       | Expr - Expr 
+       | Expr * Expr 
+       | Expr / Expr
+       | FunCall
+       | TInt
+       | TIdent
+
+FunCall ::= TIdent TBra ExprList TKet
+
+ExprList ::= Expr 
+           | Expr TComma ExprList
+           | <empty>
+
+FunDecBlock ::= FunDec FunDecBlock
+              | <empty>
+
+FunDec ::= TFun TIdent TBra FunDecArgs TKet VarDecBlock CompoundStatement
+
+FunDecArgs ::= TIdent
+             | TIdent TComma FunDecArgs
+             | <empty>
+
+CompoundStatement ::= TCBra Statements TCKet
+
+Statements ::= Statement Statements
+	     | <empty>
+
+Statement ::= TUp
+	    | TDown
+	    | TMoveTo TBra TExpr TComma TExpr TKet
+	    | TRead TBra TIdent TKet
+	    | Assignment
+	    | IfStm
+	    | IfElseStm
+	    | WhileStm
+	    | TReturn
+	    | TReturn Expr
+	    | FunCall
+	    | CompoundStatement
+
+IfStm ::= TIf TBra Comparison TKet CompoundStatement
+
+IfElseStm ::= TIf TBra Comparison TKet CompoundStatement TElse CompoundStatement
+
+WhileStm ::= TWhile TBra Comparison TKet CompoundStatment
+
+Comparison ::= Expr TEqual Expr
+	     | Expr TLeq Expr
+	     | Expr TLt Expr
+	     | Exp TGeq Expr
+	     | Exp Tgt Expr
