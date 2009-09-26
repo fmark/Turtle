@@ -26,6 +26,9 @@ tokens :-
   \{                                { \s -> TCBra }
   \}                                { \s -> TCKet }
   \,                                { \s -> TComma }
+  "var" | "fun" | "if" | "else" 
+        | "while" | "return"        { \s -> TKeyword s }
+  "up" | "down" | "moveto" | "read" { \s -> TBuiltin s }
   $digit+                           { \s -> TInt (read s) }
   $alpha [$alpha $digit \_ \']*     { \s -> TIdent s }
 
@@ -39,6 +42,8 @@ data Token = TTurtle
            | TBra  | TKet
            | TCBra | TCKet
            | TComma
+           | TKeyword String
+           | TBuiltin String
            | TIdent String
            | TInt Int
        deriving (Eq,Show)
