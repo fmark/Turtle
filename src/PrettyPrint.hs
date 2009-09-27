@@ -9,8 +9,11 @@ prettyPrint (P turt vars funcs) = (pPrint turt) ++ "\n" ++ (psPrint vars) ++  "\
 pPrint :: ProgPart -> String
 pPrint (TurtleStm s) = "turtle " ++ (show s) ++ " \n"
 pPrint (VarDec s) = "var " ++ (show s) ++ "\n"
-pPrint (VarDecAss (Assignment s e)) = "var " ++ (show s) ++ " = " ++ (prettyPrintExp e) ++ "\n"
+pPrint (VarDecAss a) = "var " ++ (sPrint a)
 pPrint (FunDec f args vars) = "fun " ++ (show f) ++ "(" ++ (intercalate ", " (map show args)) ++ ")\n" ++ (psPrint vars)
+
+sPrint :: Statement -> String
+sPrint (Assignment s e) = (show s) ++ " = " ++ (prettyPrintExp e) ++ "\n"
 
 psPrint :: [ProgPart] -> String
 psPrint (p:ps) = (pPrint p) ++ (psPrint ps)

@@ -42,23 +42,24 @@ import AbsSyn
 %%
 
 Prog     :: { Prog }
-Program     : turtle ident VarDecBlock FunDecBlock      { P (TurtleStm $2) $3 $4  }
+Program     : turtle ident VarDecBlock FunDecBlock      { P (TurtleStm $2) (reverse $3) (reverse $4)  }
 
+-- Need to parse lists in reverse order due to an implementation detail of happy
 VarDecBlock : {- empty -}                     { []                }
-            | VarDec VarDecBlock              { $1 : $2           }
+            | VarDecBlock VarDec              { $2 : $1           }
 
 
 VarDec      : var ident '=' Exp               { VarDecAss (Assignment $2 $4) }
             | var ident                       { VarDec $2         }
 
 FunDecBlock : {- empty -}                     { []                }
-            | FunDec FunDecBlock              { $1 : $2           }
+            | FunDecBlock FunDec              { $2 : $1           }
 
-FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 $4 $6 }
+FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 (reverse $4) $6 }
 
 FunDecArgs  : {- empty -}                     { []                }
             | ident                           { [$1]              }
-            | ident ',' FunDecArgs            { $1 : $3           }
+            | FunDecArgs ',' ident            { $3 : $1           }
 
 Exp         : Exp '+' Exp                     { PlusE $1 $3       }
             | ident                           { IdentE $1         }
