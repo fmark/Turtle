@@ -1,0 +1,16 @@
+screen bash
+screen emacs -nw Makefile src/Parse.y src/Tokenize.x src/AbsSyn.hs src/PrettyPrint.hs grammar.txt
+screen ssh partch
+screen ghci
+
+# Make the escape key C-z so it plays nice with emacs
+escape ^Zz
+
+startup_message off
+
+# Window list at the bottom.
+hardstatus alwayslastline
+
+# Window list with clock on right.
+hardstatus string "%-w%{= BW}%50>%n %t%{-}%+w%< %=%C%A  %D, %M/%d/%Y "
+
