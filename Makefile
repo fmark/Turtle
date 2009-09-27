@@ -9,4 +9,4 @@ src/Parse.hs : src/Parse.y
 
 clean :
 	find . -name "*.o" -o -name "*.hi" -o -name "*~"  | xargs rm -f
-	rm -f bin/turtle src/Tokenize.hs src/Parse.y
+	rm -f bin/turtle src/Tokenize.hs src/Parse.hs
