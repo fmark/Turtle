@@ -55,7 +55,7 @@ VarDec      : var ident '=' Exp               { VarDecAss (Assignment $2 $4) }
 FunDecBlock : {- empty -}                     { []                }
             | FunDecBlock FunDec              { $2 : $1           }
 
-FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 (reverse $4) $6 }
+FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 (reverse $4) (reverse $6) }
 
 FunDecArgs  : {- empty -}                     { []                }
             | ident                           { [$1]              }

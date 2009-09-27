@@ -6,9 +6,9 @@ data ProgPart  =
          TurtleStm     String           |
          VarDec        String           |
          VarDecAss     Statement        |
-         FunDec        String [String] [ProgPart] -- [Program]
+         FunDec        String [String] [ProgPart] -- [Statement]
          
-        deriving Show
+         deriving Show
 
 data Statement =
          Assignment    String Exp       
