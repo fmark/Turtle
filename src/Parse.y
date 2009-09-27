@@ -1,6 +1,8 @@
 -- An example demonstrating how to connect a Happy parser to an Alex lexer.
 {
 import Tokenize
+import PrettyPrint
+import AbsSyn
 }
 
 %name parseTurtle
@@ -37,18 +39,27 @@ import Tokenize
 
 %%
 
-Program :: { Program }
+Program     :: { Program }
 Program     : turtle ident VarDecBlock        { TurtleStm $2      }
 
 VarDecBlock : {- empty -}                     { []                }
-            | VarDecBlock VarDec              { $2 : $1           }
+            | VarDec VarDecBlock              { $1 : $2           }
 
-VarDec      : var ident                       { VarDec $2         }
---            | var Assignment                  { VarDecAss $2      }
+--VarDec      : var ident '=' Exp               { VarDecAss (Assignment $2 $4)}
+--            | var ident                       { VarDec $2         }
 
---Assignment  : ident '='                       { Assignment $1     }
+VarDec      : var ident VarDecRest                  { VarDec $2 $3 }
 
---Exp :: { Exp }
+VarDecRest : '=' Exp                                { InitVal $2   }
+           |                                        { Uninited     }
+
+
+-- Assignment  : ident '=' Exp                   { Assignment $1 $3  }
+
+ 
+
+Exp         : Exp '+' Exp                     { PlusE $1 $3       }
+            | ident                           { IdentE $1         }
 --Exp : let var '=' Exp in Exp   { LetE $2 $4 $6 }
 --    | Exp1                     { $1            }
 --
@@ -68,28 +79,12 @@ VarDec      : var ident                       { VarDec $2         }
 --    | '(' Exp ')'              { $2            } 
 
 {
-data Program = 
-         TurtleStm     String           |
-         VarDec        String           |
-         VarDecAss     String           |
-         Assignment    String      
-         deriving Show
-
--- data Exp =
---   LetE   String Exp Exp |
---   PlusE  Exp Exp        |
---   MinusE Exp Exp        |
---   TimesE Exp Exp        |
---   DivE   Exp Exp        |
---   NegE   Exp            |
---   IntE   Int            |
---   VarE   String
---   deriving Show
 
 
 -- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
 main :: IO ()
-main = interact (show.runCalc)
+--main = interact (show.runCalc)
+main = interact (prettyPrint .runCalc)
 
 runCalc :: String -> Program
 runCalc = parseTurtle . alexScanTokens
