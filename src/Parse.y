@@ -41,8 +41,8 @@ import AbsSyn
 
 %%
 
-Program     :: { Program }
-Program     : turtle ident VarDecBlock FunDecBlock      { TurtleStm $2      }
+Prog     :: { Prog }
+Program     : turtle ident VarDecBlock FunDecBlock      { P (TurtleStm $2) $3 $4  }
 
 VarDecBlock : {- empty -}                     { []                }
             | VarDec VarDecBlock              { $1 : $2           }
@@ -59,8 +59,6 @@ FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 $4 $6 }
 FunDecArgs  : {- empty -}                     { []                }
             | ident                           { [$1]              }
             | ident ',' FunDecArgs            { $1 : $3           }
--- stmts : stmt                   { [$1] }
---      | stmts ';' stmt         { $3 : $1 }
 
 Exp         : Exp '+' Exp                     { PlusE $1 $3       }
             | ident                           { IdentE $1         }
@@ -90,7 +88,7 @@ main :: IO ()
 --main = interact (show.runCalc)
 main = interact (prettyPrint .runCalc)
 
-runCalc :: String -> Program
+runCalc :: String -> Prog
 runCalc = parseTurtle . alexScanTokens
 
 happyError :: [Token] -> a

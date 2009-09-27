@@ -1,20 +1,20 @@
 module PrettyPrint (prettyPrint) where
 
+import Data.List (intercalate)
 import AbsSyn
 
--- prettyPrint :: Prog -> String
--- prettyPrint (P p1 p2) = (pPrint p1) ++ (pPrint p2)
+prettyPrint :: Prog -> String
+prettyPrint (P turt vars funcs) = (pPrint turt) ++ "\n" ++ (psPrint vars) ++  "\n" ++ (psPrint funcs)
 
--- pPrint :: ProgPart -> String
--- pPrint (TurtleStm s) = "turtle " ++ (show s) ++ " \n"
--- pPrint (VarDec s Uninited) = "var " ++ (show s) ++ "\n"
--- pPrint (VarDec s (InitVal v)) = "var " ++ (show s) ++ "= " ++ (prettyPrintExp v) ++ "\n"
+pPrint :: ProgPart -> String
+pPrint (TurtleStm s) = "turtle " ++ (show s) ++ " \n"
+pPrint (VarDec s) = "var " ++ (show s) ++ "\n"
+pPrint (VarDecAss (Assignment s e)) = "var " ++ (show s) ++ " = " ++ (prettyPrintExp e) ++ "\n"
+pPrint (FunDec f args vars) = "fun " ++ (show f) ++ "(" ++ (intercalate ", " (map show args)) ++ ")\n" ++ (psPrint vars)
 
-prettyPrint :: Program -> String
-prettyPrint (TurtleStm s) = "turtle " ++ (show s) ++ " \n"
-prettyPrint (VarDec s) = "var " ++ (show s) ++ "\n"
-prettyPrint (VarDecAss (Assignment s e)) = "var " ++ (show s) ++ "= " ++ (prettyPrintExp e) ++ "\n"
-
+psPrint :: [ProgPart] -> String
+psPrint (p:ps) = (pPrint p) ++ (psPrint ps)
+psPrint [] = ""
 
 prettyPrintExp :: Exp -> String
 prettyPrintExp (PlusE e1 e2) = (show e1) ++ " + " ++ (show e2)

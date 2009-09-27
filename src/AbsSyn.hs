@@ -1,17 +1,14 @@
 module AbsSyn where
 
-data Program  = 
+data Prog = P ProgPart [ProgPart] [ProgPart]
+
+data ProgPart  = 
          TurtleStm     String           |
          VarDec        String           |
          VarDecAss     Statement        |
-         FunDec        String [String] [Program] -- [Program]
+         FunDec        String [String] [ProgPart] -- [Program]
          
         deriving Show
-
--- data VarDecAss =
---          Uninited                       |
---          InitVal Exp
---          deriving Show
 
 data Statement =
          Assignment    String Exp       
