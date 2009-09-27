@@ -37,26 +37,30 @@ import AbsSyn
         int                   { TInt _ $$           }
         ident                 { TIdent _ $$         }
 
+%expect 1
+
 %%
 
 Program     :: { Program }
-Program     : turtle ident VarDecBlock        { TurtleStm $2      }
+Program     : turtle ident VarDecBlock FunDecBlock      { TurtleStm $2      }
 
 VarDecBlock : {- empty -}                     { []                }
             | VarDec VarDecBlock              { $1 : $2           }
 
---VarDec      : var ident '=' Exp               { VarDecAss (Assignment $2 $4)}
---            | var ident                       { VarDec $2         }
 
-VarDec      : var ident VarDecRest                  { VarDec $2 $3 }
+VarDec      : var ident '=' Exp               { VarDecAss (Assignment $2 $4) }
+            | var ident                       { VarDec $2         }
 
-VarDecRest : '=' Exp                                { InitVal $2   }
-           |                                        { Uninited     }
+FunDecBlock : {- empty -}                     { []                }
+            | FunDec FunDecBlock              { $1 : $2           }
 
+FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 $4 $6 }
 
--- Assignment  : ident '=' Exp                   { Assignment $1 $3  }
-
- 
+FunDecArgs  : {- empty -}                     { []                }
+            | ident                           { [$1]              }
+            | ident ',' FunDecArgs            { $1 : $3           }
+-- stmts : stmt                   { [$1] }
+--      | stmts ';' stmt         { $3 : $1 }
 
 Exp         : Exp '+' Exp                     { PlusE $1 $3       }
             | ident                           { IdentE $1         }

@@ -12,8 +12,8 @@ import AbsSyn
 
 prettyPrint :: Program -> String
 prettyPrint (TurtleStm s) = "turtle " ++ (show s) ++ " \n"
-prettyPrint (VarDec s Uninited) = "var " ++ (show s) ++ "\n"
-prettyPrint (VarDec s (InitVal v)) = "var " ++ (show s) ++ "= " ++ (prettyPrintExp v) ++ "\n"
+prettyPrint (VarDec s) = "var " ++ (show s) ++ "\n"
+prettyPrint (VarDecAss (Assignment s e)) = "var " ++ (show s) ++ "= " ++ (prettyPrintExp e) ++ "\n"
 
 
 prettyPrintExp :: Exp -> String

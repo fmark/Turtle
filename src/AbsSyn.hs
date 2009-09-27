@@ -2,13 +2,16 @@ module AbsSyn where
 
 data Program  = 
          TurtleStm     String           |
-         VarDec        String VarDecAss 
-         deriving Show
+         VarDec        String           |
+         VarDecAss     Statement        |
+         FunDec        String [String] [Program] -- [Program]
+         
+        deriving Show
 
-data VarDecAss =
-         Uninited                       |
-         InitVal Exp
-         deriving Show
+-- data VarDecAss =
+--          Uninited                       |
+--          InitVal Exp
+--          deriving Show
 
 data Statement =
          Assignment    String Exp       
