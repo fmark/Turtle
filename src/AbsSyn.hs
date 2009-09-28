@@ -6,7 +6,7 @@ data ProgPart  =
          TurtleStm     String           |
          VarDec        String           |
          VarDecAss     Statement        |
-         FunDec        String [String] [ProgPart] -- [Statement]
+         FunDec        String [String] [ProgPart] [Statement]
          
          deriving Show
 

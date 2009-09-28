@@ -10,10 +10,18 @@ pPrint :: ProgPart -> String
 pPrint (TurtleStm s) = "turtle " ++ (show s) ++ " \n"
 pPrint (VarDec s) = "var " ++ (show s) ++ "\n"
 pPrint (VarDecAss a) = "var " ++ (sPrint a)
-pPrint (FunDec f args vars) = "fun " ++ (show f) ++ "(" ++ (intercalate ", " (map show args)) ++ ")\n" ++ (psPrint vars)
+pPrint (FunDec f args vars stms) = "fun " ++ (show f) ++ "(" 
+            ++ (intercalate ", " (map show args)) ++ ")\n" 
+            ++ (psPrint vars) ++ "{\n" ++ (ssPrint stms) ++ "}\n"
 
 sPrint :: Statement -> String
 sPrint (Assignment s e) = (show s) ++ " = " ++ (prettyPrintExp e) ++ "\n"
+
+ssPrint :: [Statement] -> String
+ssPrint (s:ss) = (sPrint s) ++ (ssPrint ss)
+ssPrint [] = ""
+
+
 
 psPrint :: [ProgPart] -> String
 psPrint (p:ps) = (pPrint p) ++ (psPrint ps)

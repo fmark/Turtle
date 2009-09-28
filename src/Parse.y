@@ -48,14 +48,20 @@ Program     : turtle ident VarDecBlock FunDecBlock      { P (TurtleStm $2) (reve
 VarDecBlock : {- empty -}                     { []                }
             | VarDecBlock VarDec              { $2 : $1           }
 
-
-VarDec      : var ident '=' Exp               { VarDecAss (Assignment $2 $4) }
+VarDec      : var Assignment                  { VarDecAss $2      }
             | var ident                       { VarDec $2         }
 
 FunDecBlock : {- empty -}                     { []                }
             | FunDecBlock FunDec              { $2 : $1           }
 
-FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock    { FunDec $2 (reverse $4) (reverse $6) }
+FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock '{' CmpStm '}' { FunDec $2 (reverse $4) (reverse $6) (reverse $8)}
+
+Assignment  : ident '=' Exp                   { Assignment $1 $3  }
+
+CmpStm      : {- empty -}                     { []                }
+            | CmpStm Stm                      { $2 : $1           }
+
+Stm         : Assignment                      { $1                }
 
 FunDecArgs  : {- empty -}                     { []                }
             | ident                           { [$1]              }
