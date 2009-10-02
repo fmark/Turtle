@@ -20,19 +20,7 @@ data Exp =
          TimesE Exp Exp        |
          DivE   Exp Exp        |
          NegE   Exp            |
---         FunCall               |
+         FunCall String [Exp]  |
          IntE   Int            |
          IdentE String
          deriving Show
-
-
--- data Exp =
---   LetE   String Exp Exp |
---   PlusE  Exp Exp        |
---   MinusE Exp Exp        |
---   TimesE Exp Exp        |
---   DivE   Exp Exp        |
---   NegE   Exp            |
---   IntE   Int            |
---   VarE   String
---   deriving Show

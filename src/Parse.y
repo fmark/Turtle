@@ -39,7 +39,7 @@ import AbsSyn
 
 %left '+' '-'
 %left '*' '/'
-
+%left NEG
 
 %%
 
@@ -56,29 +56,33 @@ VarDec      : var Assignment                  { VarDecAss $2      }
 FunDecBlock : {- empty -}                     { []                }
             | FunDecBlock FunDec              { $2 : $1           }
 
-FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock '{' CmpStm '}' { FunDec $2 (reverse $4) (reverse $6) (reverse $8)}
+FunDec      : fun ident '(' IdentList ')' VarDecBlock '{' CmpStm '}' { FunDec $2 (reverse $4) (reverse $6) (reverse $8)}
 
-FunDecArgs  : {- empty -}                     { []                }
-            | ident                           { [$1]              }
-            | FunDecArgs ',' ident            { $3 : $1           }
+IdentList  : {- empty -}                     { []                }
+           | ident                           { [$1]              }
+           | IdentList ',' ident             { $3 : $1           }
 
+ExpList    : {- empty -}                     { []                }
+           | Exp                             { [$1]              }
+           | ExpList ',' Exp                 { $3 : $1           }
 
+Assignment : ident '=' Exp                   { Assignment $1 $3  }
 
-Assignment  : ident '=' Exp                   { Assignment $1 $3  }
+CmpStm     : {- empty -}                     { []                }
+           | CmpStm Stm                      { $2 : $1           }
 
-CmpStm      : {- empty -}                     { []                }
-            | CmpStm Stm                      { $2 : $1           }
+Stm        : Assignment                      { $1                }
 
-Stm         : Assignment                      { $1                }
-
-Exp         : Exp '+' Exp                     { PlusE $1 $3       }
-            | Exp '-' Exp                     { MinusE $1 $3      }
-            | Exp '*' Exp                     { TimesE $1 $3      }
-            | Exp '/' Exp                     { DivE $1 $3        }
-            | '-' Exp                         { NegE $2           }
-            | ident                           { IdentE $1         }
-            | int                             { IntE $1           }
-            | '(' Exp ')'                     { $2                }
+Exp        : Exp '+' Exp                     { PlusE $1 $3       }
+           | Exp '-' Exp                     { MinusE $1 $3      }
+           | Exp '*' Exp                     { TimesE $1 $3      }
+           | Exp '/' Exp                     { DivE $1 $3        }
+           | ident '(' ExpList ')'           { FunCall $1 (reverse $3)}
+           | ident                           { IdentE $1         }
+           | int                             { IntE $1           }
+           | '(' Exp ')'                     { $2                }
+-- negation has highest precedence, not low like subtraction
+           | '-' Exp %prec NEG               { NegE $2           }
 
 {
 

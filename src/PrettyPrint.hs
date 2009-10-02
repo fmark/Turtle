@@ -35,4 +35,7 @@ prettyPrintExp (DivE e1 e2) = (prettyPrintExp e1) ++ " / " ++ (prettyPrintExp e2
 prettyPrintExp (NegE e) = "-" ++ (prettyPrintExp e)
 prettyPrintExp (IdentE i) = i
 prettyPrintExp (IntE i) = show i
+prettyPrintExp (FunCall f params) = f ++ "(" 
+            ++ (intercalate ", " (map prettyPrintExp params)) ++ ")"
+
 
