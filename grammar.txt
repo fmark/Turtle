@@ -47,7 +47,6 @@ Statement ::= TUp
 	    | IfStm
 	    | IfElseStm
 	    | WhileStm
-	    | TReturn
 	    | TReturn Expr
 	    | FunCall
 	    | CompoundStatement
