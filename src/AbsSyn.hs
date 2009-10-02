@@ -3,8 +3,7 @@ module AbsSyn where
 data Prog = P String [ProgPart] [ProgPart] [Statement]
 
 data ProgPart  = 
-         VarDec        String           |
-         VarDecAss     Statement        |
+         VarDec         Statement        |
          FunDec        String [String] [ProgPart] [Statement]
          
          deriving Show

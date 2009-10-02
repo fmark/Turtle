@@ -7,8 +7,7 @@ prettyPrint :: Prog -> String
 prettyPrint (P turt vars funcs main) = "turtle " ++ turt ++ "\n\n" ++ (psPrint vars) ++  "\n" ++ (psPrint funcs) ++ "\n{\n" ++  (ssPrint main) ++ "}\n"
 
 pPrint :: ProgPart -> String
-pPrint (VarDec s) = "var " ++ s ++ "\n"
-pPrint (VarDecAss a) = "var " ++ (sPrint a)
+pPrint (VarDec a) = "var " ++ (sPrint a)
 pPrint (FunDec f args vars stms) = "fun " ++ f ++ "(" 
             ++ (intercalate ", " args) ++ ")\n" 
             ++ (psPrint vars) ++ "{\n" ++ (ssPrint stms) ++ "}\n"

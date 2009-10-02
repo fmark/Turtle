@@ -36,7 +36,7 @@ import AbsSyn
         read                  { TBuiltin _ "read"   }
         int                   { TInt _ $$           }
         ident                 { TIdent _ $$         }
-
+ 
 %left '+' '-'
 %left '*' '/'
 %left NEG
@@ -50,8 +50,8 @@ Program     : turtle ident VarDecBlock FunDecBlock CmpStm     { P $2 (reverse $3
 VarDecBlock : {- empty -}                     { []                }
             | VarDecBlock VarDec              { $2 : $1           }
 
-VarDec      : var Assignment                  { VarDecAss $2      }
-            | var ident                       { VarDec $2         }
+VarDec      : var Assignment                  { VarDec $2      }
+            | var ident                       { VarDec (Assignment $2 (IntE 0))}
 
 FunDecBlock : {- empty -}                     { []                }
             | FunDecBlock FunDec              { $2 : $1           }
