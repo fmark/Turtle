@@ -4,6 +4,7 @@ import Tokenize
 import PrettyPrint
 import Desugar
 import AbsSyn
+import Translate
 }
 
 %name parseTurtle
@@ -113,7 +114,8 @@ Comparison : Exp "==" Exp                    { Equality $1 $3    }
 -- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
 main :: IO ()
 --main = interact (show.runCalc)
-main = interact (prettyPrint . desugar . runCalc)
+main = interact (prettyPrint . translate . desugar . runCalc)
+
 
 runCalc :: String -> Prog
 runCalc = parseTurtle .alexScanTokens
