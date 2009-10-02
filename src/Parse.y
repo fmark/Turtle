@@ -37,7 +37,9 @@ import AbsSyn
         int                   { TInt _ $$           }
         ident                 { TIdent _ $$         }
 
-%expect 1
+%left '+' '-'
+%left '*' '/'
+
 
 %%
 
@@ -56,6 +58,12 @@ FunDecBlock : {- empty -}                     { []                }
 
 FunDec      : fun ident '(' FunDecArgs ')' VarDecBlock '{' CmpStm '}' { FunDec $2 (reverse $4) (reverse $6) (reverse $8)}
 
+FunDecArgs  : {- empty -}                     { []                }
+            | ident                           { [$1]              }
+            | FunDecArgs ',' ident            { $3 : $1           }
+
+
+
 Assignment  : ident '=' Exp                   { Assignment $1 $3  }
 
 CmpStm      : {- empty -}                     { []                }
@@ -63,29 +71,14 @@ CmpStm      : {- empty -}                     { []                }
 
 Stm         : Assignment                      { $1                }
 
-FunDecArgs  : {- empty -}                     { []                }
-            | ident                           { [$1]              }
-            | FunDecArgs ',' ident            { $3 : $1           }
-
 Exp         : Exp '+' Exp                     { PlusE $1 $3       }
+            | Exp '-' Exp                     { MinusE $1 $3      }
+            | Exp '*' Exp                     { TimesE $1 $3      }
+            | Exp '/' Exp                     { DivE $1 $3        }
+            | '-' Exp                         { NegE $2           }
             | ident                           { IdentE $1         }
---Exp : let var '=' Exp in Exp   { LetE $2 $4 $6 }
---    | Exp1                     { $1            }
---
---Exp1 : Exp1 '+' Term           { PlusE  $1 $3  }
---     | Exp1 '-' Term           { MinusE $1 $3  }
---     | Term                    { $1            }
---
---Term : Term '*' Factor         { TimesE $1 $3  }
---     | Term '/' Factor         { DivE $1 $3    }
---     | Factor                  { $1            }
---
---Factor : '-' Atom              { NegE $2}
---       | Atom                  { $1}
---
---Atom : int                     { IntE $1       }
---    | var                      { VarE $1       }
---    | '(' Exp ')'              { $2            } 
+            | int                             { IntE $1           }
+            | '(' Exp ')'                     { $2                }
 
 {
 
