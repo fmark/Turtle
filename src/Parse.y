@@ -57,7 +57,7 @@ VarDec      : var Assignment                  { VarDec $2      }
 FunDecBlock : {- empty -}                     { []                }
             | FunDecBlock FunDec              { $2 : $1           }
 
-FunDec      : fun ident '(' IdentList ')' VarDecBlock CmpStm { FunDec $2 (reverse $4) (reverse $6) $7}
+FunDec      : fun ident '(' IdentList ')' VarDecBlock CmpStm { FunDec $2 (reverse $4) (reverse $6) ($7 ++ [(Return (IntE 0))])}
 
 IdentList  : {- empty -}                     { []                }
            | ident                           { [$1]              }
