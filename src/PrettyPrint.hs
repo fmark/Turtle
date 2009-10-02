@@ -27,6 +27,7 @@ sPrint (FunCallStm f es) = f ++ "(" ++ (intercalate ", " (map ePrint es)) ++ ")\
 
 cPrint :: Comparison -> String
 cPrint (Equality      e1 e2) = (ePrint e1) ++ " == " ++ (ePrint e2)
+cPrint (Inequality    e1 e2) = (ePrint e1) ++ " != " ++ (ePrint e2)
 cPrint (LessThan      e1 e2) = (ePrint e1) ++ " < " ++ (ePrint e2)
 cPrint (LessThanEq    e1 e2) = (ePrint e1) ++ " <= " ++ (ePrint e2)
 cPrint (GreaterThan   e1 e2) = (ePrint e1) ++ " > " ++ (ePrint e2)

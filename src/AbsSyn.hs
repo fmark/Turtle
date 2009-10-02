@@ -35,6 +35,7 @@ data Exp =
 
 data Comparison =
          Equality      Exp Exp          |
+         Inequality    Exp Exp          |
          LessThan      Exp Exp          |
          LessThanEq    Exp Exp          |
          GreaterThan   Exp Exp          |

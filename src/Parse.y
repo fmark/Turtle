@@ -12,6 +12,7 @@ import AbsSyn
         "<="                  { TComparOp _ "<="    }
         ">="                  { TComparOp _ ">="    }
         "=="                  { TComparOp _ "=="    }
+        "!="                  { TComparOp _ "!="    }
         ">"                   { TComparOp _ ">"     }
         "<"                   { TComparOp _ "<"     }
         '='                   { TAssOp _            }
@@ -99,6 +100,7 @@ Stm        : up   '(' ')'                    { Up                }
 Assignment : ident '=' Exp                   { Assignment $1 $3  }
 
 Comparison : Exp "==" Exp                    { Equality $1 $3    }
+           | Exp "!=" Exp                    { Inequality $1 $3  }
            | Exp "<"  Exp                    { LessThan $1 $3    }
            | Exp "<=" Exp                    { LessThanEq $1 $3  }
            | Exp ">"  Exp                    { GreaterThan $1 $3 }

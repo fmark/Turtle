@@ -19,6 +19,7 @@ tokens :-
   -- Comparison operators.  May contain whitespace if two char symbols
   \< $white* \= | \= $white* \= 
                 | \> $white* \= 
+                | \! $white* \= 
                 | \> 
                 | \<                { \p s -> TComparOp p (filter (not . isSpace) s) }
   \=                                { \p s -> TAssOp p }
