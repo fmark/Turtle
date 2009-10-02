@@ -22,7 +22,7 @@ tokens :-
                 | \> 
                 | \<                { \p s -> TComparOp p (filter (not . isSpace) s) }
   \=                                { \p s -> TAssOp p }
-  [\+\-\*\\]                        { \p s -> TArithOp p (head s) }
+  [\+\-\*\/]                        { \p s -> TArithOp p (head s) }
   \(                                { \p s -> TBra p }
   \)                                { \p s -> TKet p }
   \{                                { \p s -> TCBra p }
