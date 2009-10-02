@@ -1,1 +1,6 @@
-A Turtle compiler.
+A Turtle compiler.  
+
+Variations of language from specification include:
+  * addition of usual comparison operators (>, >=, <=, !=)
+  * allow builtin drawing functions up and down to have trailing empty parens
+
