@@ -2,6 +2,7 @@
 {
 import Tokenize
 import PrettyPrint
+import Desugar
 import AbsSyn
 }
 
@@ -52,7 +53,7 @@ VarDecBlock : {- empty -}                     { []                }
             | VarDecBlock VarDec              { $2 : $1           }
 
 VarDec      : var Assignment                  { VarDec $2      }
-            | var ident                       { VarDec (Assignment $2 (IntE 0))}
+            | var ident                       { VarDecDef $2   }
 
 FunDecBlock : {- empty -}                     { []                }
             | FunDecBlock FunDec              { $2 : $1           }
@@ -112,10 +113,10 @@ Comparison : Exp "==" Exp                    { Equality $1 $3    }
 -- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
 main :: IO ()
 --main = interact (show.runCalc)
-main = interact (prettyPrint .runCalc)
+main = interact (prettyPrint . desugar . runCalc)
 
 runCalc :: String -> Prog
-runCalc = parseTurtle . alexScanTokens
+runCalc = parseTurtle .alexScanTokens
 
 happyError :: [Token] -> a
 happyError tks = error ("Parse error at " ++ lcn ++ "\n")
