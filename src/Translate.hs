@@ -33,6 +33,22 @@ findVals a abs = (map snd (filter (\ab -> a == (fst ab)) abs))
 getVal :: Eq a => a -> [(a, b)] -> b
 getVal a abs = head (findVals a abs)
 
+pushF :: (String, (Int, Int)) -> [(String, (Int, Int))] -> [(String, (Int, Int))]
+pushF f ftab = if hasKey (fst f) ftab then 
+                   error $ "pushing duplicate function \"" ++ (fst f) ++ "\" onto table."
+               else f:ftab
+
+pushV :: (String, Int) -> [(String, Int)] -> [(String, Int)]
+pushV v vtab = if hasKey (fst v) vtab then 
+                   error $ "pushing duplicate variable \"" ++ (fst v) ++ "\" onto table."
+               else v:vtab
+
+pushVs :: [(String, Int)] -> [(String, Int)] -> [(String, Int)]
+pushVs vs vtab = if length dups > 0 then 
+                     error $ "pushing duplicate variables \"" ++ show dups ++ "\" onto table."
+                 else (reverse vs) ++ vtab -- push in reverse order
+         where dups = (intersect (map fst vs) (map fst vtab))
+
 translate :: Prog -> Prog
 translate p = fst3 (translateP p [] [])
          where fst3 (a, b, c) = a
@@ -69,12 +85,16 @@ translatePP (FunDec f args vars body) ftab vtab = if hasKey f ftab then
                                                       error $ "Function \"" ++ f ++ "\" redeclares parameters " ++ (show argsvarsi) ++ "."
                                                   else if length varsvartabi > 0 then -- redeclares variables
                                                       error $ "Function \"" ++ f ++ "\" redeclares variables " ++ (show varsvartabi) ++ "."
-                                                  else ((FunDec f args vars body), (f, (-1, -1)):ftab, vtab) -- do nothing
+                                                  else ((FunDec f args vars body), ftab', vtab'' ) -- do nothing 
         where
           argsvartabi = intersect args (map fst vtab)
           argsvarsi = intersect args (varStrList vars)
           varStrList vs = map (\(VarDec (Assignment s e)) -> s) vs 
           varsvartabi = intersect (varStrList vars) (map fst vtab)
+          ftab' = pushF (f, (-1, -1)) ftab
+          vtab' = pushVs (map (\v -> (v, -1)) args) vtab
+          vtab'' = pushVs (map (\(VarDec (Assignment s e))-> (s, -1)) vars) vtab'
+
 translatePP pp ftab vtab = (pp, ftab, vtab)
 
 -- translateSs :: [Statement] -> [(String, (Int, Int))] -> [(String, Int)] ->  ([Statement], [(String, (Int, Int))], [(String, Int)])
