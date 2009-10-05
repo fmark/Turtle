@@ -4,7 +4,7 @@ import Tokenize
 import PrettyPrint
 import Desugar
 import AbsSyn
-import Translate
+import Translate2
 }
 
 %name parseTurtle
@@ -46,8 +46,8 @@ import Translate
 
 %%
 
-Prog     :: { Prog }
-Program     : turtle ident VarDecBlock FunDecBlock CmpStm     { P $2 (reverse $3) (reverse $4) $5 }
+-- Program    :: { ProgPart }
+Program     : turtle ident VarDecBlock FunDecBlock CmpStm     { Prog $2 (reverse $3) (reverse $4) $5 }
 
 -- Need to parse lists in reverse order due to an implementation detail of happy
 VarDecBlock : {- empty -}                     { []                }
@@ -117,7 +117,7 @@ main :: IO ()
 main = interact (prettyPrint . translate . desugar . runCalc)
 
 
-runCalc :: String -> Prog
+runCalc :: String -> ProgPart
 runCalc = parseTurtle .alexScanTokens
 
 happyError :: [Token] -> a

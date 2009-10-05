@@ -3,45 +3,36 @@ module Desugar (desugar) where
 -- import Data.List (intercalate)
 import AbsSyn
 
--- TODO: figure out how to do this with overloading using type classes.
-desugar :: Prog -> Prog
-desugar (P s vars funcs main) = (P s (map desugarPP vars) (map desugarPP funcs) (map desugarS main))
-
-desugarPP :: ProgPart -> ProgPart
+desugar :: ProgPart -> ProgPart
 -- All variable declarations with no explicit assignment should be assigned 0
-desugarPP (VarDecDef s) = VarDec (Assignment s (IntE 0))
-desugarPP (VarDec a) = VarDec a
-desugarPP (FunDec f args vardecs body) = (FunDec f args (map desugarPP vardecs) (map desugarS body))
-
-desugarS :: Statement -> Statement
-desugarS (Assignment s e)   = Assignment s (desugarE e)
-desugarS (MoveTo e1 e2)     = MoveTo (desugarE e1) (desugarE e2)
+desugar (Prog s vars funcs main) = (Prog s (map desugar vars) (map desugar funcs) (map desugar main))
+desugar (VarDecDef s) = VarDec (Assignment s (IntE 0))
+desugar (VarDec a) = VarDec a
+desugar (FunDec f args vardecs body) = (FunDec f args (map desugar vardecs) (map desugar body))
+desugar (Assignment s e)   = Assignment s (desugar e)
+desugar (MoveTo e1 e2)     = MoveTo (desugar e1) (desugar e2)
 -- convert all ifs to ifelses
-desugarS (If c ss)          = desugarS (IfElse c ss [])
+desugar (If c ss)          = desugar (IfElse c ss [])
 -- remove all the comparison operators we added
-desugarS (IfElse (Inequality    e1 e2) s1s s2s) = desugarS (IfElse (Equality e1 e2) s2s s1s)
-desugarS (IfElse (GreaterThanEq e1 e2) s1s s2s) = desugarS (IfElse (LessThan e1 e2) s2s s1s)
-desugarS (IfElse (GreaterThan   e1 e2) s1s s2s) = desugarS (IfElse (Equality e1 e2) s2s [(IfElse (LessThan e1 e2) s2s s1s)])
-desugarS (IfElse (LessThanEq    e1 e2) s1s s2s) = desugarS (IfElse (Equality e1 e2) s1s [(IfElse (LessThan e1 e2) s1s s2s)])
+desugar (IfElse (Inequality    e1 e2) s1s s2s) = desugar (IfElse (Equality e1 e2) s2s s1s)
+desugar (IfElse (GreaterThanEq e1 e2) s1s s2s) = desugar (IfElse (LessThan e1 e2) s2s s1s)
+desugar (IfElse (GreaterThan   e1 e2) s1s s2s) = desugar (IfElse (Equality e1 e2) s2s [(IfElse (LessThan e1 e2) s2s s1s)])
+desugar (IfElse (LessThanEq    e1 e2) s1s s2s) = desugar (IfElse (Equality e1 e2) s1s [(IfElse (LessThan e1 e2) s1s s2s)])
 -- default
-desugarS (IfElse c s1s s2s) = IfElse (desugarC c) (map desugarS s1s) (map desugarS s2s)
-desugarS (While c ss)       = While (desugarC c) (map desugarS ss)
-desugarS (Return e)         = Return (desugarE e)
-desugarS (FunCallStm s es)  = FunCallStm s (map desugarE es)
-desugarS (Compound ss)      = Compound (map desugarS ss)
-desugarS s = s
-
-desugarE :: Exp -> Exp
-desugarE (PlusE e1 e2)      = PlusE  (desugarE e1) (desugarE e2)
-desugarE (MinusE e1 e2)     = MinusE (desugarE e1) (desugarE e2)
-desugarE (TimesE e1 e2)     = TimesE (desugarE e1) (desugarE e2)
-desugarE (NegE e)           = NegE (desugarE e)
-desugarE (FunCall s es)     = FunCall s (map desugarE es)
+desugar (IfElse c s1s s2s) = IfElse (desugar c) (map desugar s1s) (map desugar s2s)
+desugar (While c ss)       = While (desugar c) (map desugar ss)
+desugar (Return e)         = Return (desugar e)
+desugar (FunCallStm s es)  = FunCallStm s (map desugar es)
+desugar (Compound ss)      = Compound (map desugar ss)
+desugar (PlusE e1 e2)      = PlusE  (desugar e1) (desugar e2)
+desugar (MinusE e1 e2)     = MinusE (desugar e1) (desugar e2)
+desugar (TimesE e1 e2)     = TimesE (desugar e1) (desugar e2)
+desugar (NegE e)           = NegE (desugar e)
+desugar (FunCall s es)     = FunCall s (map desugar es)
 -- need to implement division in terms of plus and mul
-desugarE (DivE e1 e2)       = error "Division not implemented yet!"
-desugarE e = e
+desugar (DivE e1 e2)       = error "Division not implemented yet!"
+desugar (Equality e1 e2)   = Equality (desugar e1) (desugar e2)
+desugar (LessThan e1 e2)   = LessThan (desugar e1) (desugar e2)
 
-desugarC :: Comparison -> Comparison
-desugarC (Equality e1 e2)   = Equality (desugarE e1) (desugarE e2)
-desugarC (LessThan e1 e2)   = LessThan (desugarE e1) (desugarE e2)
+desugar e = e -- catchall
 
