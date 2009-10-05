@@ -1,7 +1,7 @@
 screen bash
-screen emacs -nw Makefile src/Parse.y src/Tokenize.x src/AbsSyn.hs src/PrettyPrint.hs grammar.txt
-screen ssh partch
 screen ghci
+screen ssh partch
+screen emacs -nw Makefile grammar.txt src/Parse.y src/Tokenize.x src/AbsSyn.hs src/PrettyPrint.hs src/Translate.hs
 
 # Make the escape key C-z so it plays nice with emacs
 escape ^Zz
