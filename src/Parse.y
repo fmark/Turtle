@@ -97,7 +97,7 @@ Stm        : up   '(' ')'                    { Up                }
            | if '(' Comparison ')' CmpStm    { If $3 $5          }
            | if '(' Comparison ')' CmpStm else CmpStm   { IfElse $3 $5 $7 }
            | while '(' Comparison ')' CmpStm { While $3 $5       }
-           | ident '(' ExpList ')'           { FunCallStm $1 (reverse $3)}
+           | ident '(' ExpList ')'           { FunCall $1 (reverse $3)}
 
 Assignment : ident '=' Exp                   { Assignment $1 $3  }
 

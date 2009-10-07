@@ -19,7 +19,6 @@ prettyPrint (Return e      ) = "return " ++ (prettyPrint e) ++ "\n"
 prettyPrint (If c ss       ) = "if (" ++ (prettyPrint c) ++ ") {\n" ++ (ppsPrint ss) ++ "}\n"
 prettyPrint (IfElse c s1s s2s) = "if (" ++ (prettyPrint c) ++ ") {\n" ++ (ppsPrint s1s) ++ "} else {\n"  ++ (ppsPrint s2s) ++ "}\n"
 prettyPrint (While c ss    ) = "while (" ++ (prettyPrint c) ++ ") {\n" ++ (ppsPrint ss) ++ "}\n"
-prettyPrint (FunCallStm f es) = f ++ "(" ++ (intercalate ", " (map prettyPrint es)) ++ ")\n"
 prettyPrint (Equality      e1 e2) = (prettyPrint e1) ++ " == " ++ (prettyPrint e2)
 prettyPrint (Inequality    e1 e2) = (prettyPrint e1) ++ " != " ++ (prettyPrint e2)
 prettyPrint (LessThan      e1 e2) = (prettyPrint e1) ++ " < " ++ (prettyPrint e2)
