@@ -4,7 +4,7 @@ import Tokenize
 import PrettyPrint
 import Desugar
 import AbsSyn
-import Translate2
+import Translate
 }
 
 %name parseTurtle
