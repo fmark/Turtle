@@ -58,12 +58,13 @@ data Instruction = HaltI
                  | StoreFP Int
                  | ReadGP Int
                  | ReadFP Int
-                 | JsrI Int
-                 | JumpI Int
-                 | JeqI Int
-                 | JltI Int
-                 | LoadiI Int
-                 | PopI Int
+                 | JsrI
+                 | JumpI
+                 | JeqI 
+                 | JltI 
+                 | LoadiI
+                 | PopI 
+                 | WordI Int
                    deriving Show
                  
 
@@ -126,7 +127,7 @@ translate' (Read s)              ftab vtab is = case lookupId s vtab of
                                                   otherwise    -> error $ "Unhandled case"
     where ret i = ((Read s), ftab, vtab, (ap is i))
 -- expressions
-translate' (IntE i)              ftab vtab is = ((IntE i), ftab, vtab, (ap is (LoadiI i)))
+translate' (IntE i)              ftab vtab is = ((IntE i), ftab, vtab, (ap (ap is LoadiI) (WordI i)))
 translate' (IdentE s)            ftab vtab is = case lookupId s vtab of
                                                   Just (G _ i) -> ret (LoadGP i)
                                                   Just (L _ i) -> ret (LoadFP i)
@@ -140,10 +141,14 @@ translate' (MinusE e1 e2)        ftab vtab is = translateBinaryOp (MinusE e1 e2)
 translate' (TimesE e1 e2)        ftab vtab is = translateBinaryOp (TimesE e1 e2) ftab vtab is
 translate' (NegE e1)             ftab vtab is = ((NegE e1'), ftab', vtab', (ap is' NegI))
     where (e1', ftab', vtab', is') = translate' e1 ftab vtab is
--- PlusE  (translate' e1 ftab vtab ) (translate' e2)
--- translate' (MinusE e1 e2)     ftab vtab is = MinusE (translate' e1) (translate' e2)
--- translate' (TimesE e1 e2)     ftab vtab is = TimesE (translate' e1) (translate' e2)
--- translate' (NegE e)           ftab vtab is = NegE (translate' e)
+translate' (FunCall s es)        ftab vtab is = (fc, ftab', vtab', is''')
+    where
+      is' = (ap (ap is LoadiI) (WordI 0))  -- reserve a spot on the stack for the function call result
+      (es', ftab', vtab', is'')  = translatePPs es ftab vtab is'
+      (fc, is''') = case lookupId s ftab' of
+             Just (F _ i _) -> ((FunCall s es'), (ap (ap is'' JsrI) (WordI i)))
+             Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
+             otherwise      -> error $ "Unhandled case in function call."
 -- translate' (FunCall s es)     = FunCall s (map translate' es)
 
 -- translate' (If c ss)             ftab vtab is = 
