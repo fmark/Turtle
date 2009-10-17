@@ -148,8 +148,6 @@ translate' (FunCall s es)        ftab vtab is = (fc, ftab', vtab', is''')
              Just (F _ i _) -> ((FunCall s es'), (ap (ap is'' JsrI) (WordI i)))
              Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
--- translate' (FunCall s es)     = FunCall s (map translate' es)
-
 -- translate' (If c ss)             ftab vtab is = 
 -- translate' (IfElse c ss1 ss2)    ftab vtab is = 
 -- translate' (While c ss)          ftab vtab is = 
@@ -159,7 +157,6 @@ translate' (Compound ss)         ftab vtab is = ((Compound ss'), ftab', vtab', i
     where (ss', ftab', vtab', is') = translatePPs ss ftab vtab is
 translate' pp ftab vtab is = (pp, ftab, vtab, is)
 
-
 translateBinaryOp exp ftab vtab is = (exp, ftab, vtab, (ap is'' inst))
     where
       (e1', e2', inst) = case exp of 
@@ -168,7 +165,6 @@ translateBinaryOp exp ftab vtab is = (exp, ftab, vtab, (ap is'' inst))
                    (TimesE e1 e2) -> (e1, e2, MulI)
       (e1'', _, _, is')  = translate' e1' ftab vtab is
       (e2'', _, _, is'') = translate' e2' ftab vtab is'
-      
 
 translateFunDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  [Instruction] -> ([ProgPart], [Symbol], [Symbol], [Instruction])
 translateFunDecs (pp:pps) i ftab vtab is = ((pp':pps'), ftab'', vtab'', is'') 
