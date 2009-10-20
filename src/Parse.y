@@ -112,8 +112,10 @@ Comparison : Exp "==" Exp                    { Equality $1 $3    }
 
 -- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
 main :: IO ()
---main = interact (show.runCalc)
-main = interact (prettyPrintI . translate . desugar . runCalc)
+
+--main = interact (prettyPrint . desugar . runCalc) -- just desugar and print source-code
+main = interact (prettyPrintI . translate . desugar . runCalc) -- translate and print instructions
+
 
 
 runCalc :: String -> ProgPart
