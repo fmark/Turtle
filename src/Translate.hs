@@ -163,8 +163,13 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is''', i
              Just (F _ i _) -> ((FunCall s es'), (ap (ap is'' JsrI) (WordI i)))
              Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
--- translate' (If c ss)             ftab vtab is = 
--- translate' (IfElse c ss1 ss2)    ftab vtab is = 
+-- The desugar phase should have guarenteed we have only if-elses, not standalone ifs
+translate' (IfElse c ss1 ss2)    ftab vtab is idxs = ((IfElse c' ss1' ss2'), ftab''', vtab''', is''', idxs''')
+    where
+      (c', ftab', vtab', is', idxs')           = translate' c ftab vtab is idxs
+      (ss1', ftab'', vtab'', is'', idxs'')     = translatePPs ss1 ftab' vtab' is' idxs'
+      (ss2', ftab''', vtab''', is''', idxs''') = translatePPs ss2 ftab'' vtab'' is'' idxs''
+
 -- translate' (While c ss)          ftab vtab is = 
 -- translate' (FunCallStm f params) ftab vtab is = 
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
@@ -185,6 +190,16 @@ translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab',
                                                   Just (P _ i) -> ap is' (StoreFP i)
                                                   otherwise    -> error $ "Return statement can only be used within a function."
       is'''                          = ap is'' RtsI
+
+-- Desugar phase should have guarenteed we have only Equality and LessThan comparators.
+translate' (LessThan e1 e2)      ftab vtab is idxs = ((LessThan e1' e2'), ftab'', vtab'', is'''', idxs'')
+    where
+      (e1', ftab', vtab', is', idxs')     = translate' e1 ftab vtab is idxs
+      (e2', ftab'', vtab'', is'', idxs'') = translate' e2 ftab' vtab' is' idxs'
+      is''' = is'' S.>< (S.fromList [SubI, TestI, PopI, (WordI 1), JltI])
+      is'''' = ap (ap is''' (WordI ((S.length is''') + 3))) JumpI
+      is''''' = dog muffin froop
+
 
 --catchall - DELETE ME
 translate' pp ftab vtab is idxs = (pp, ftab, vtab, is, idxs)
