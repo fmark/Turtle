@@ -1,6 +1,7 @@
-module Translate (translate) where
+module Translate (translate, prettyPrintI) where
 
 import Data.List (intersect)
+import Data.Foldable (toList)
 import Debug.Trace
 import qualified Data.Sequence as S
 import AbsSyn
@@ -93,11 +94,17 @@ backpatch :: S.Seq Instruction -> [Int] -> Instruction -> (S.Seq Instruction, [I
 backpatch is (idx:idxs) i = ((S.update idx i is), idxs)
 backpatch is [] i = error "backpatch called against empty index stack"
 
-translate :: ProgPart -> ProgPart
-translate p = fst5 (trace ((show is) ++ "\n--\n") (pp, ftab, vtab, is, idxs))
+translate :: ProgPart -> [Instruction]
+translate p = toList (frth  (pp, ftab, vtab, is, idxs))
          where 
            (pp, ftab, vtab, is, idxs) = translate' p [] [] S.empty []
-           fst5 (a, _, _, _, _) = a
+           frth (_, _, _, a, _) = a
+
+-- translate :: ProgPart -> ProgPart
+-- translate p = fst5 (trace ((show is) ++ "\n--\n") (pp, ftab, vtab, is, idxs))
+--          where 
+--            (pp, ftab, vtab, is, idxs) = translate' p [] [] S.empty []
+--            fst5 (a, _, _, _, _) = a
 
 -- First param is input, 2nd Param is function table, 3rd param is var table
 translatePPs :: [ProgPart] -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
@@ -110,7 +117,7 @@ translatePPs [] ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 -- First param is input, 2nd Param is function table, 3rd param is var table, 4th param is the instructions generated, 5th param is backpatch idx stack
 translate' :: ProgPart -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> (ProgPart, [Symbol], [Symbol], S.Seq Instruction, [Int])
 
-translate' (Prog s vars funcs main) ftab vtab is idxs = ((Prog s vars' funcs' main'), ftab'''', vtab'''', is''''', idxs''''')
+translate' (Prog s vars funcs main) ftab vtab is idxs = ((Prog s vars' funcs' main'), ftab'''', vtab'''', is'''''', idxs''''')
     where 
       (vars', ftab', vtab', is', idxs')             = translateGVarDecs vars 1 ftab vtab is idxs
       is''                                          = ap (ap is' JumpI) (WordI 0)
@@ -118,8 +125,8 @@ translate' (Prog s vars funcs main) ftab vtab is idxs = ((Prog s vars' funcs' ma
       (funcs', ftab''', vtab''', is''', idxs''')    = translateFunDecs funcs 1 ftab' vtab' is'' idxs''
       (main', ftab'''', vtab'''', is'''', idxs'''') = translatePPs main ftab''' vtab''' is''' idxs'''
       (is''''', idxs''''') = backpatch is'''' idxs'''' (WordI (S.length is'''))
--- statements
--- translate' (Assignment s e) ftab vtab is = 
+      is'''''' = ap is''''' HaltI
+
 translate' (Up)                  ftab vtab is idxs  = (Up, ftab, vtab, (ap is UpI), idxs)
 translate' (Down)                ftab vtab is idxs = (Down, ftab, vtab, (ap is DownI), idxs)
 translate' (MoveTo e1 e2)        ftab vtab is idxs = ((MoveTo e1' e2'), ftab, vtab, (ap is'' MoveI), idxs)
@@ -159,10 +166,27 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is''', i
 -- translate' (If c ss)             ftab vtab is = 
 -- translate' (IfElse c ss1 ss2)    ftab vtab is = 
 -- translate' (While c ss)          ftab vtab is = 
--- translate' (Return e)            ftab vtab is = 
 -- translate' (FunCallStm f params) ftab vtab is = 
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
     where (ss', ftab', vtab', is', idxs') = translatePPs ss ftab vtab is idxs
+translate' (Assignment s e)      ftab vtab is idxs = ((Assignment s e'), ftab', vtab', is'', idxs')
+    where
+      (e', ftab', vtab', is', idxs') = translate' e ftab vtab is idxs
+      is''                           =  case lookupId s vtab' of
+                                                  Just (G _ i) -> ap is' (StoreGP i)
+                                                  Just (L _ i) -> ap is' (StoreFP i)
+                                                  Just (P _ i) -> ap is' (StoreFP i)
+                                                  Nothing      -> error $ "Storing to undeclared variable \"" ++ s ++ "\"."
+                                                  otherwise    -> error $ "Unhandled case"
+translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab', is''', idxs')
+    where
+      (e', ftab', vtab', is', idxs') = translate' e ftab vtab is idxs
+      is''                           = case lookupId "!ret" vtab' of
+                                                  Just (P _ i) -> ap is' (StoreFP i)
+                                                  otherwise    -> error $ "Return statement can only be used within a function."
+      is'''                          = ap is'' RtsI
+
+--catchall - DELETE ME
 translate' pp ftab vtab is idxs = (pp, ftab, vtab, is, idxs)
 
 translateBinaryOp exp ftab vtab is idxs = (exp, ftab, vtab, (ap is'' inst), idxs)
@@ -187,9 +211,11 @@ translateFunDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'
                               else ((FunDec f args' vars' body'), (i + 1), ftab', vtab, is'''', idxs)
                                    where
                                      ftab' = (F f i (length args)):ftab
-                                     (args', ftab'', vtab'', is'', idxs'')         = translatePVarDecs args (-(length args)) ftab' vtab is idxs
+                                     (args', ftab'', vtab'', is'', idxs'')         = translatePVarDecs args (-(length args)-1) ftab' vtab is idxs
                                      (vars', ftab''', vtab''', is''', idxs''')     = translateLVarDecs vars 1 ftab' vtab'' is'' idxs''
-                                     (body', ftab'''', vtab'''', is'''', idxs'''') = translatePPs body ftab' vtab''' is''' idxs'''
+                                     -- push a pseduo-variable onto the lookup table for return statement
+                                     vtab''''                                      = (P "!ret" ((-(length args)) - 2)):vtab'''
+                                     (body', ftab'''', _, is'''', idxs'''') = translatePPs body ftab' vtab'''' is''' idxs'''
 translateFunDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translateGVarDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] ->
@@ -235,3 +261,9 @@ translatePVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is
                           error $ "Identifier \"" ++ s ++ "\" declared more than once."
                       else (s, (i + 1), ftab, ((P s i):vtab), is, idxs)
 translatePVarDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
+
+
+prettyPrintI  :: [Instruction] -> String
+prettyPrintI  is       = prettyPrintI' is 0
+prettyPrintI' (i:is) n = (show n) ++ "  " ++ (show i) ++ "\n" ++ (prettyPrintI' is (n + 1))
+prettyPrintI' [] _     = ""

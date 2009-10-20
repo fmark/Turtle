@@ -1,4 +1,3 @@
--- An example demonstrating how to connect a Happy parser to an Alex lexer.
 {
 import Tokenize
 import PrettyPrint
@@ -114,7 +113,7 @@ Comparison : Exp "==" Exp                    { Equality $1 $3    }
 -- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
 main :: IO ()
 --main = interact (show.runCalc)
-main = interact (prettyPrint . translate . desugar . runCalc)
+main = interact (prettyPrintI . translate . desugar . runCalc)
 
 
 runCalc :: String -> ProgPart

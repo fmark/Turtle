@@ -4,8 +4,8 @@ module Desugar (desugar) where
 import AbsSyn
 
 desugar :: ProgPart -> ProgPart
--- All variable declarations with no explicit assignment should be assigned 0
 desugar (Prog s vars funcs main) = (Prog s (map desugar vars) (map desugar funcs) (map desugar main))
+-- All variable declarations with no explicit assignment should be assigned 0
 desugar (VarDecDef s) = VarDec (Assignment s (IntE 0))
 desugar (VarDec a) = VarDec a
 desugar (FunDec f args vardecs body) = (FunDec f args (map desugar vardecs) (map desugar body))
