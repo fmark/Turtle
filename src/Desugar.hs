@@ -22,6 +22,7 @@ desugar (IfElse (LessThanEq    e1 e2) s1s s2s) = desugar (IfElse (Equality e1 e2
 desugar (IfElse c s1s s2s) = IfElse (desugar c) (map desugar s1s) (map desugar s2s)
 desugar (While c ss)       = While (desugar c) (map desugar ss)
 desugar (Return e)         = Return (desugar e)
+desugar (FunCallStm s es)  = FunCallStm s (map desugar es)
 desugar (Compound ss)      = Compound (map desugar ss)
 desugar (PlusE e1 e2)      = PlusE  (desugar e1) (desugar e2)
 desugar (MinusE e1 e2)     = MinusE (desugar e1) (desugar e2)
