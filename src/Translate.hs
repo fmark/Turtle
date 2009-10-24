@@ -243,7 +243,7 @@ translateFunDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'
                   translateFD (FunDec f args vars body) i ftab vtab is idxs = 
                               if idDeclared f ftab then 
                                        error $ "Function \"" ++ f ++ "\" declared more than once."
-                              else ((FunDec f args' vars' body'), (i + 1), ftab', vtab, is'''', idxs)
+                              else ((FunDec f args' vars' body'), (i + 1), ftab', vtab, is'''', idxs'''')
                                    where
                                      ftab' = (F f i (length args)):ftab
                                      (args', ftab'', vtab'', is'', idxs'')         = translatePVarDecs args (-(length args)-1) ftab' vtab is idxs
@@ -271,7 +271,7 @@ translateGVarDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translateLVarDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] -> 
                      ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
-translateLVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is, idxs)
+translateLVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'', idxs'')
                 where 
                   (pp', i', ftab', vtab', is', idxs') = translateLVD pp i ftab vtab is idxs
                   (pps', ftab'', vtab'', is'', idxs'') = translateLVarDecs pps i' ftab' vtab' is' idxs'
@@ -281,7 +281,9 @@ translateLVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is
                       case lookupId s vtab of
                         Just (P _ i) -> error $ "Local variable \"" ++ s ++ "\" is already declared as a parameter in this function."
                         Just (L _ i) -> error $ "Local variable \"" ++ s ++ "\" is already declared in this function."
-                        otherwise    -> ((VarDec (Assignment s e)), (i + 1), ftab, ((L s i):vtab), is, idxs)
+                        otherwise    -> ((VarDec (Assignment s e''')), (i + 1), ftab''', ((L s i):vtab'''), is''', idxs''')
+                            where 
+                              (e''', ftab''', vtab''', is''', idxs''') = translate' e ftab vtab is idxs
 translateLVarDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translatePVarDecs :: [String] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] -> 
