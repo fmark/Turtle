@@ -87,13 +87,19 @@ lookupId sym (s:ss) = if sym == (name s) then Just s else lookupId sym ss
 lookupId _ [] = Nothing
 
 -- use own append fn to make it easier if we wish to use lists instead of sequences later
-ap :: (Eq a) => S.Seq a -> a -> S.Seq a
+ap :: S.Seq a -> a -> S.Seq a
 ap as a = as S.|> a
 
+-- Appends an item to end of sequence, but only if the last item in the sequence
+-- is not a duplicate of it
 apNoDup :: (Eq a) => S.Seq a -> a -> S.Seq a
 apNoDup as a = if (l > 0) && ((S.index as (l -1)) == a) then as else ap as a
                where l = S.length as
 
+-- Appends [PopI, (WordI i)] to end of is.  However, if the last two
+-- instructions are already pop and word, then it simply adds the two
+-- word values together.  This coalesces multiple consecutive pops
+-- together into a single pop.
 -- Horrible horrible implementation.  I need to get me some haskell!
 apPopMerge :: S.Seq Instruction -> Int -> S.Seq Instruction
 apPopMerge is i = if (l >= 2) && i1 == PopI && i2 == (WordI n) then
@@ -180,7 +186,7 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is'''', 
              Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
       is'''' = if (length es) > 0 then
-                   apPopMerge is''' (length es) --ap (ap is''' PopI) (WordI (length es))
+                   apPopMerge is''' (length es)
                else
                    is'''
 -- The desugar phase should have guarenteed we have only if-elses, not standalone ifs
@@ -204,7 +210,7 @@ translate' (While c ss)          ftab vtab is idxs = ((While c' ss'), ftab'', vt
 translate' (FunCallStm f params) ftab vtab is idxs = ((FunCallStm f' params'), ftab', vtab', is'', idxs')
     where
       ((FunCall f' params'), ftab', vtab', is', idxs') = translate' (FunCall f params) ftab vtab is idxs
-      is''                                             = apPopMerge is' 1 --ap (ap is' PopI) (WordI 1)
+      is''                                             = apPopMerge is' 1 
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
     where (ss', ftab', vtab', is', idxs') = translatePPs ss ftab vtab is idxs
 translate' (Assignment s e)      ftab vtab is idxs = ((Assignment s e'), ftab', vtab', is'', idxs')
