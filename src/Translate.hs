@@ -183,7 +183,7 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is'''', 
       (es', ftab', vtab', is'', idxs')  = translatePPs es ftab vtab is' idxs
       (fc, is''') = case lookupId s ftab' of
              Just (F _ i _) -> ((FunCall s es'), (ap (ap is'' JsrI) (WordI i)))
-             Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
+             Nothing        -> error $ "Undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
       is'''' = if (length es) > 0 then
                    apPopMerge is''' (length es)
