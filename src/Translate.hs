@@ -94,6 +94,17 @@ apNoDup :: (Eq a) => S.Seq a -> a -> S.Seq a
 apNoDup as a = if (l > 0) && ((S.index as (l -1)) == a) then as else ap as a
                where l = S.length as
 
+-- Horrible horrible implementation.  I need to get me some haskell!
+apPopMerge :: S.Seq Instruction -> Int -> S.Seq Instruction
+apPopMerge is i = if (l >= 2) && i1 == PopI && i2 == (WordI n) then
+                          S.update (l - 1) (WordI (n + i)) is
+                      else 
+                          ap (ap is PopI) (WordI i)
+    where l = S.length is
+          (is2, i2) = case S.viewr is  of (xx S.:> x) -> (xx, x)
+          (is1, i1) = case S.viewr is2 of xx S.:> x -> (xx, x)
+          n         = case i2 of WordI n   -> n 
+                                 otherwise -> 0
 
 backpatch :: S.Seq Instruction -> [Int] -> Instruction -> (S.Seq Instruction, [Int])
 backpatch is (idx:idxs) i = ((S.update idx i is), idxs)
@@ -169,7 +180,7 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is'''', 
              Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
       is'''' = if (length es) > 0 then
-                   ap (ap is''' PopI) (WordI (length es))
+                   apPopMerge is''' (length es) --ap (ap is''' PopI) (WordI (length es))
                else
                    is'''
 -- The desugar phase should have guarenteed we have only if-elses, not standalone ifs
@@ -193,7 +204,7 @@ translate' (While c ss)          ftab vtab is idxs = ((While c' ss'), ftab'', vt
 translate' (FunCallStm f params) ftab vtab is idxs = ((FunCallStm f' params'), ftab', vtab', is'', idxs')
     where
       ((FunCall f' params'), ftab', vtab', is', idxs') = translate' (FunCall f params) ftab vtab is idxs
-      is''                                             = ap (ap is' PopI) (WordI 1)
+      is''                                             = apPopMerge is' 1 --ap (ap is' PopI) (WordI 1)
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
     where (ss', ftab', vtab', is', idxs') = translatePPs ss ftab vtab is idxs
 translate' (Assignment s e)      ftab vtab is idxs = ((Assignment s e'), ftab', vtab', is'', idxs')
