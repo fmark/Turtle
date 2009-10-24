@@ -181,7 +181,10 @@ translate' (While c ss)          ftab vtab is idxs = ((While c' ss'), ftab'', vt
       is'''                                        = ap (ap is'' JumpI) (WordI (S.length is))
       (is'''', idxs''')                            = backpatch is''' idxs'' (WordI (S.length is'''))
 
--- translate' (FunCallStm f params) ftab vtab is = 
+translate' (FunCallStm f params) ftab vtab is idxs = ((FunCallStm f' params'), ftab', vtab', is'', idxs')
+    where
+      ((FunCall f' params'), ftab', vtab', is', idxs') = translate' (FunCall f params) ftab vtab is idxs
+      is''                                             = ap (ap is' PopI) (WordI 1)
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
     where (ss', ftab', vtab', is', idxs') = translatePPs ss ftab vtab is idxs
 translate' (Assignment s e)      ftab vtab is idxs = ((Assignment s e'), ftab', vtab', is'', idxs')
