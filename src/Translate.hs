@@ -155,7 +155,7 @@ translate' (MinusE e1 e2)        ftab vtab is idxs = translateBinaryOp (MinusE e
 translate' (TimesE e1 e2)        ftab vtab is idxs = translateBinaryOp (TimesE e1 e2) ftab vtab is idxs
 translate' (NegE e1)             ftab vtab is idxs = ((NegE e1'), ftab', vtab', (ap is' NegI), idxs')
     where (e1', ftab', vtab', is', idxs') = translate' e1 ftab vtab is idxs
-translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is''', idxs')
+translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is'''', idxs')
     where
       is' = (ap (ap is LoadiI) (WordI 0))  -- reserve a spot on the stack for the function call result
       (es', ftab', vtab', is'', idxs')  = translatePPs es ftab vtab is' idxs
@@ -163,6 +163,10 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is''', i
              Just (F _ i _) -> ((FunCall s es'), (ap (ap is'' JsrI) (WordI i)))
              Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
+      is'''' = if (length es) > 0 then
+                   ap (ap is''' PopI) (WordI (length es))
+               else
+                   is'''
 -- The desugar phase should have guarenteed we have only if-elses, not standalone ifs
 translate' (IfElse c ss1 ss2)    ftab vtab is idxs = ((IfElse c' ss1' ss2'), ftab''', vtab''', is'''''', idxs'''''')
     where
