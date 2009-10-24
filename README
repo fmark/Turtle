@@ -3,4 +3,5 @@ A Turtle compiler.
 Variations of language from specification include:
   * addition of usual comparison operators (>, >=, <=, !=)
   * allow builtin drawing functions up and down to have trailing empty parens
+  * functions can be called before they are declared, without the need for pre-declarations.
 
