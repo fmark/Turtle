@@ -1,4 +1,4 @@
-module Translate (translate, prettyPrintI) where
+module Translate (translateToBinary, translate, prettyPrintI) where
 
 import Data.List (intersect)
 import Data.Foldable (toList)
@@ -86,6 +86,39 @@ apPopMerge is i = if (l >= 2) && i1 == PopI && i2 == (WordI n) then
 backpatch :: S.Seq Instruction -> [Int] -> Instruction -> (S.Seq Instruction, [Int])
 backpatch is (idx:idxs) i = ((S.update idx i is), idxs)
 backpatch is [] i = error "backpatch called against empty index stack"
+
+translateToBinary :: [Instruction] -> [Int]
+translateToBinary = map iToB
+    where iToB inst = case inst of
+                     HaltI       -> 0x0000
+                     UpI         -> 0x0A00
+                     DownI       -> 0x0C00
+                     MoveI       -> 0x0E00
+                     AddI        -> 0x1000
+                     SubI        -> 0x1200
+                     NegI        -> 0x2200
+                     MulI        -> 0x1400
+                     TestI       -> 0x1600
+                     RtsI        -> 0x2800
+                     (LoadGP i)  -> 0x0600 + chk i
+                     (LoadFP i)  -> 0x0700 + chk i
+                     (StoreGP i) -> 0x0400 + chk i
+                     (StoreFP i) -> 0x0500 + chk i
+                     (ReadGP i)  -> 0x0200 + chk i
+                     (ReadFP i)  -> 0x0300 + chk i
+                     JsrI        -> 0x6800
+                     JumpI       -> 0x7000
+                     JeqI        -> 0x7200
+                     JltI        -> 0x7400
+                     LoadiI      -> 0x5600
+                     PopI        -> 0x5E00
+                     (WordI i)   -> i
+                     otherwise   -> error $ "Unhandled instruction " ++ (show inst)
+              where
+                chk i = if i > 0xFF then 
+                            error $ "Too many variables declared.  Cannot continue." 
+                        else
+                            i
 
 translate :: ProgPart -> [Instruction]
 translate p = toList (frth  (pp, ftab, vtab, is', idxs))

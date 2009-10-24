@@ -114,7 +114,7 @@ Comparison : Exp "==" Exp                    { Equality $1 $3    }
 main :: IO ()
 
 --main = interact (prettyPrint . desugar . runCalc) -- just desugar and print source-code
-main = interact (prettyPrintI . translate . desugar . runCalc) -- translate and print instructions
+main = interact (unlines . (map show) . translateToBinary . translate . desugar . runCalc) -- translate and print instructions
 
 
 
