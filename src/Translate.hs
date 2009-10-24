@@ -196,18 +196,27 @@ translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab',
       is'''                          = ap is'' RtsI
 
 -- Desugar phase should have guarenteed we have only Equality and LessThan comparators.
-translate' (LessThan e1 e2)      ftab vtab is idxs = ((LessThan e1' e2'), ftab'', vtab'', is'''', idxs''')
-    where
-      (e1', ftab', vtab', is', idxs')     = translate' e1 ftab vtab is idxs
-      (e2', ftab'', vtab'', is'', idxs'') = translate' e2 ftab' vtab' is' idxs'
-      is''' = is'' S.>< (S.fromList [SubI, TestI, PopI, (WordI 1), JltI])
-      is'''' = is''' S.>< (S.fromList [(WordI ((S.length is''') + 3)), JumpI, (WordI (-7))])
-      idxs''' = ((S.length is'''') - 1):idxs''
-                
+translate' (LessThan e1 e2)      ftab vtab is idxs = translateComparator (LessThan e1 e2) ftab vtab is idxs
+translate' (Equality e1 e2)      ftab vtab is idxs = translateComparator (Equality e1 e2) ftab vtab is idxs
 
 
 --catchall - replace with error fn when complete
 translate' pp ftab vtab is idxs = (pp, ftab, vtab, is, idxs)
+
+translateComparator :: ProgPart -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> 
+                       (ProgPart, [Symbol], [Symbol], S.Seq Instruction, [Int])
+translateComparator pp ftab vtab is idxs = (pp', ftab'', vtab'', is'''', idxs''')
+    where
+      (ctor, e1, e2, jmpinst) = case pp of 
+                         (Equality ea eb) -> (Equality, ea, eb, JeqI)
+                         (LessThan ea eb) -> (LessThan, ea, eb, JltI)
+                         otherwise        -> error $ "Unhandled comparator."
+      (e1', ftab', vtab', is', idxs')     = translate' e1 ftab vtab is idxs
+      (e2', ftab'', vtab'', is'', idxs'') = translate' e2 ftab' vtab' is' idxs'
+      is''' = is'' S.>< (S.fromList [SubI, TestI, PopI, (WordI 1), jmpinst])
+      is'''' = is''' S.>< (S.fromList [(WordI ((S.length is''') + 3)), JumpI, (WordI 0)])
+      idxs''' = ((S.length is'''') - 1):idxs''
+      pp' = ctor e1' e2'
 
 translateBinaryOp exp ftab vtab is idxs = (exp, ftab, vtab, (ap is'' inst), idxs)
     where
