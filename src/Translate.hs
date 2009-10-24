@@ -234,10 +234,6 @@ translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab',
 translate' (LessThan e1 e2)      ftab vtab is idxs = translateComparator (LessThan e1 e2) ftab vtab is idxs
 translate' (Equality e1 e2)      ftab vtab is idxs = translateComparator (Equality e1 e2) ftab vtab is idxs
 
-
---catchall - replace with error fn when complete
-translate' pp ftab vtab is idxs = (pp, ftab, vtab, is, idxs)
-
 translateComparator :: ProgPart -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> 
                        (ProgPart, [Symbol], [Symbol], S.Seq Instruction, [Int])
 translateComparator pp ftab vtab is idxs = (pp', ftab'', vtab'', is'''', idxs''')
