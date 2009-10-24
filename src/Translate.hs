@@ -6,36 +6,6 @@ import Debug.Trace
 import qualified Data.Sequence as S
 import AbsSyn
 
--- hasDups :: Eq a => [a] -> Bool
--- -- Inefficient, maybe replace with something smarter
--- -- hasDups a = if length a == length (nub a) then False else True
--- hasDups l                   = hasDups' l []  
---   where
---     hasDups' [] _           = False
---     hasDups' (x:xs) ls
---         | x `elem` ls   = True
---         | otherwise     = hasDups' xs (x:ls)
-
--- -- Will error if hasDups == False
--- firstDup :: Eq a => [a] -> a
--- firstDup l                   = firstDup' l []  
---   where
---     firstDup' (x:xs) ls
---         | x `elem` ls   = x
---         | otherwise     = firstDup' xs (x:ls)
-
-
--- hasKey :: Eq a => a -> [(a, b)] -> Bool
--- hasKey a abs = elem a (map fst abs)
-
--- findVals :: Eq a => a -> [(a, b)] -> [b]
--- findVals a abs = (map snd (filter (\ab -> a == (fst ab)) abs))
-
--- -- ensures exactly one val is returned.  Use findVals if another
--- -- number of vals could be valid
--- getVal :: Eq a => a -> [(a, b)] -> b
--- getVal a abs = head (findVals a abs)
-
 data Symbol = F String Int Int
             | G String Int
             | L String Int
@@ -135,19 +105,10 @@ linkFunctionCalls is ftab = case S.viewl is of
                                                                                         error $ "Function \"" ++ s ++ "\" expects " ++ show args ++ 
                                                                                                   " parameters but was called with " ++ show i ++
                                                                                                   " parameters."
---((trace ("Found " ++ s)) JsrI) S.<| (linkFunctionCalls xx ftab)
                                                               otherwised -> error $ "Undeclared function \"" ++ s ++ "\" called."
                               (x S.:< xx)                -> x S.<| (linkFunctionCalls xx ftab)
                               otherwise                -> S.empty
                                             
-                                            
-
--- translate :: ProgPart -> ProgPart
--- translate p = fst5 (trace ((show is) ++ "\n--\n") (pp, ftab, vtab, is, idxs))
---          where 
---            (pp, ftab, vtab, is, idxs) = translate' p [] [] S.empty []
---            fst5 (a, _, _, _, _) = a
-
 -- First param is input, 2nd Param is function table, 3rd param is var table
 translatePPs :: [ProgPart] -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
 translatePPs (pp:pps) ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'', idxs'') 
