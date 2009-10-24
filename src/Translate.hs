@@ -174,7 +174,13 @@ translate' (IfElse c ss1 ss2)    ftab vtab is idxs = ((IfElse c' ss1' ss2'), fta
       (is''''', idxs''''')                         = backpatch is'''' idxs'''' (WordI (S.length is''''))
       (is'''''', idxs'''''')                       = backpatch is''''' idxs''''' (WordI (S.length is'''))
 
--- translate' (While c ss)          ftab vtab is = 
+translate' (While c ss)          ftab vtab is idxs = ((While c' ss'), ftab'', vtab'', is'''', idxs''')
+    where
+      (c', ftab', vtab', is', idxs')               = translate' c ftab vtab is idxs
+      (ss', ftab'', vtab'', is'', idxs'')          = translatePPs ss ftab' vtab' is' idxs'
+      is'''                                        = ap (ap is'' JumpI) (WordI (S.length is))
+      (is'''', idxs''')                            = backpatch is''' idxs'' (WordI (S.length is'''))
+
 -- translate' (FunCallStm f params) ftab vtab is = 
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
     where (ss', ftab', vtab', is', idxs') = translatePPs ss ftab vtab is idxs
