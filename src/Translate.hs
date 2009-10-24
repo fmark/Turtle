@@ -305,7 +305,6 @@ translatePVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is
                         otherwise    -> (s, (i + 1), ftab, ((P s i):vtab), is, idxs)
 translatePVarDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
-
 prettyPrintI  :: [Instruction] -> String
 prettyPrintI  is       = prettyPrintI' is 0
 prettyPrintI' (i:is) n = (show n) ++ "  " ++ (show i) ++ "\n" ++ (prettyPrintI' is (n + 1))
