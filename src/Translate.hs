@@ -59,6 +59,7 @@ data Instruction = HaltI
                  | ReadGP Int
                  | ReadFP Int
                  | JsrI
+                 | JsrFirstPass String Int
                  | JumpI
                  | JeqI 
                  | JltI 
@@ -117,10 +118,29 @@ backpatch is (idx:idxs) i = ((S.update idx i is), idxs)
 backpatch is [] i = error "backpatch called against empty index stack"
 
 translate :: ProgPart -> [Instruction]
-translate p = toList (frth  (pp, ftab, vtab, is, idxs))
+translate p = toList (frth  (pp, ftab, vtab, is', idxs))
          where 
            (pp, ftab, vtab, is, idxs) = translate' p [] [] S.empty []
+           is' = linkFunctionCalls is ftab
            frth (_, _, _, a, _) = a
+
+-- A second pass that translates all JsrFirstPass calls into actual
+-- function calls, or throws an error if the function is never declared
+-- or the wrong number of params is used.
+linkFunctionCalls :: S.Seq Instruction -> [Symbol] -> S.Seq Instruction
+linkFunctionCalls is ftab = case S.viewl is of
+                              (JsrFirstPass s i S.:< xx) -> case lookupId s ftab of 
+                                                              Just (F _ pos args) -> if args == i then 
+                                                                                        JsrI S.<| (linkFunctionCalls (S.update 0 (WordI pos) xx) ftab) else 
+                                                                                        error $ "Function \"" ++ s ++ "\" expects " ++ show args ++ 
+                                                                                                  " parameters but was called with " ++ show i ++
+                                                                                                  " parameters."
+--((trace ("Found " ++ s)) JsrI) S.<| (linkFunctionCalls xx ftab)
+                                                              otherwised -> error $ "Undeclared function \"" ++ s ++ "\" called."
+                              (x S.:< xx)                -> x S.<| (linkFunctionCalls xx ftab)
+                              otherwise                -> S.empty
+                                            
+                                            
 
 -- translate :: ProgPart -> ProgPart
 -- translate p = fst5 (trace ((show is) ++ "\n--\n") (pp, ftab, vtab, is, idxs))
@@ -181,10 +201,7 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is'''', 
     where
       is' = (ap (ap is LoadiI) (WordI 0))  -- reserve a spot on the stack for the function call result
       (es', ftab', vtab', is'', idxs')  = translatePPs es ftab vtab is' idxs
-      (fc, is''') = case lookupId s ftab' of
-             Just (F _ i _) -> ((FunCall s es'), (ap (ap is'' JsrI) (WordI i)))
-             Nothing        -> error $ "Undeclared function \"" ++ s ++ "\" called."
-             otherwise      -> error $ "Unhandled case in function call."
+      (fc, is''') = ((FunCall s es'), (ap (ap is'' (JsrFirstPass s (length es'))) (WordI 0)))
       is'''' = if (length es) > 0 then
                    apPopMerge is''' (length es)
                else
