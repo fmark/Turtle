@@ -65,7 +65,7 @@ data Instruction = HaltI
                  | LoadiI
                  | PopI 
                  | WordI Int
-                   deriving Show
+                   deriving (Show, Eq)
                  
 
 idDeclared :: String -> [Symbol] -> Bool
@@ -87,8 +87,13 @@ lookupId sym (s:ss) = if sym == (name s) then Just s else lookupId sym ss
 lookupId _ [] = Nothing
 
 -- use own append fn to make it easier if we wish to use lists instead of sequences later
-ap :: S.Seq a -> a -> S.Seq a
+ap :: (Eq a) => S.Seq a -> a -> S.Seq a
 ap as a = as S.|> a
+
+apNoDup :: (Eq a) => S.Seq a -> a -> S.Seq a
+apNoDup as a = if (l > 0) && ((S.index as (l -1)) == a) then as else ap as a
+               where l = S.length as
+
 
 backpatch :: S.Seq Instruction -> [Int] -> Instruction -> (S.Seq Instruction, [Int])
 backpatch is (idx:idxs) i = ((S.update idx i is), idxs)
@@ -258,7 +263,7 @@ translateFunDecs (pp:pps) ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'',
                                      -- push a pseduo-variable onto the lookup table for return statement
                                      vtab''''                                      = (P "!ret" ((-(length args)) - 2)):vtab'''
                                      (body', ftab'''', _, is'''', idxs'''')        = translatePPs body ftab' vtab'''' is''' idxs'''
-                                     is'''''                                       = ap is'''' RtsI
+                                     is'''''                                       = apNoDup is'''' RtsI
 translateFunDecs [] ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translateGVarDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] ->
