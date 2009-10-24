@@ -122,7 +122,7 @@ translate' (Prog s vars funcs main) ftab vtab is idxs = ((Prog s vars' funcs' ma
       (vars', ftab', vtab', is', idxs')             = translateGVarDecs vars 1 ftab vtab is idxs
       is''                                          = ap (ap is' JumpI) (WordI 0)
       idxs''                                        = ((S.length is'') - 1):idxs'
-      (funcs', ftab''', vtab''', is''', idxs''')    = translateFunDecs funcs 1 ftab' vtab' is'' idxs''
+      (funcs', ftab''', vtab''', is''', idxs''')    = translateFunDecs funcs ftab' vtab' is'' idxs''
       (main', ftab'''', vtab'''', is'''', idxs'''') = translatePPs main ftab''' vtab''' is''' idxs'''
       (is''''', idxs''''') = backpatch is'''' idxs'''' (WordI (S.length is'''))
       is'''''' = ap is''''' HaltI
@@ -236,26 +236,26 @@ translateBinaryOp exp ftab vtab is idxs = (exp, ftab, vtab, (ap is'' inst), idxs
       (e1'', _, _, is', _)  = translate' e1' ftab vtab is idxs
       (e2'', _, _, is'', _) = translate' e2' ftab vtab is' idxs
 
-translateFunDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] -> ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
-translateFunDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'', idxs'') 
+translateFunDecs :: [ProgPart] -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] -> ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
+translateFunDecs (pp:pps) ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'', idxs'') 
                 where 
-                  (pp', i', ftab', vtab', is', idxs') = translateFD pp i ftab vtab is idxs
-                  (pps', ftab'', vtab'', is'', idxs'')  = translateFunDecs pps i' ftab' vtab' is' idxs'
-                  translateFD :: ProgPart -> Int -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> 
-                                 (ProgPart, Int, [Symbol], [Symbol], S.Seq Instruction, [Int])
-                  translateFD (FunDec f args vars body) i ftab vtab is idxs = 
+                  (pp', ftab', vtab', is', idxs') = translateFD pp ftab vtab is idxs
+                  (pps', ftab'', vtab'', is'', idxs'')  = translateFunDecs pps ftab' vtab' is' idxs'
+                  translateFD :: ProgPart -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> 
+                                 (ProgPart, [Symbol], [Symbol], S.Seq Instruction, [Int])
+                  translateFD (FunDec f args vars body) ftab vtab is idxs = 
                               if idDeclared f ftab then 
                                        error $ "Function \"" ++ f ++ "\" declared more than once."
-                              else ((FunDec f args' vars' body'), (i + 1), ftab', vtab, is''''', idxs'''')
+                              else ((FunDec f args' vars' body'), ftab', vtab, is''''', idxs'''')
                                    where
-                                     ftab' = (F f i (length args)):ftab
+                                     ftab' = (F f (S.length is) (length args)):ftab
                                      (args', ftab'', vtab'', is'', idxs'')         = translatePVarDecs args (-(length args)-1) ftab' vtab is idxs
                                      (vars', ftab''', vtab''', is''', idxs''')     = translateLVarDecs vars 1 ftab' vtab'' is'' idxs''
                                      -- push a pseduo-variable onto the lookup table for return statement
                                      vtab''''                                      = (P "!ret" ((-(length args)) - 2)):vtab'''
                                      (body', ftab'''', _, is'''', idxs'''')        = translatePPs body ftab' vtab'''' is''' idxs'''
                                      is'''''                                       = ap is'''' RtsI
-translateFunDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
+translateFunDecs [] ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translateGVarDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] ->
                      ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
