@@ -14,7 +14,7 @@ data ProgPart  =
          IfElse ProgPart [ProgPart] [ProgPart]                     |
          While ProgPart [ProgPart]                                 |
          Return ProgPart                                           |
---         FunCallStm String [ProgPart]                              |
+         FunCallStm String [ProgPart]                              |
          Compound     [ProgPart]                                   |
          PlusE   ProgPart ProgPart                                 |
          MinusE  ProgPart ProgPart                                 |
