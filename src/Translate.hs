@@ -272,9 +272,10 @@ translateLVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is
                   translateLVD :: ProgPart -> Int -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> 
                                   (ProgPart, Int, [Symbol], [Symbol], S.Seq Instruction, [Int])
                   translateLVD (VarDec (Assignment s e)) i ftab vtab is idxs = 
-                      if idDeclared s vtab then 
-                          error $ "Identifier \"" ++ s ++ "\" declared more than once."
-                      else ((VarDec (Assignment s e)), (i + 1), ftab, ((L s i):vtab), is, idxs)
+                      case lookupId s vtab of
+                        Just (P _ i) -> error $ "Local variable \"" ++ s ++ "\" is already declared as a parameter in this function."
+                        Just (L _ i) -> error $ "Local variable \"" ++ s ++ "\" is already declared in this function."
+                        otherwise    -> ((VarDec (Assignment s e)), (i + 1), ftab, ((L s i):vtab), is, idxs)
 translateLVarDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translatePVarDecs :: [String] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] -> 
@@ -286,9 +287,10 @@ translatePVarDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is
                   translatePVD :: String -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] -> 
                                   (String, Int, [Symbol], [Symbol], S.Seq Instruction, [Int])
                   translatePVD s i ftab vtab is idxs = 
-                      if idDeclared s vtab then 
-                          error $ "Identifier \"" ++ s ++ "\" declared more than once."
-                      else (s, (i + 1), ftab, ((P s i):vtab), is, idxs)
+                      case lookupId s vtab of
+                        Just (P _ i) -> error $ "Parameter \"" ++ s ++ "\" is already declared in this function."
+                        Just (L _ i) -> error $ "Parameter \"" ++ s ++ "\" is already declared as a local variable in this function."
+                        otherwise    -> (s, (i + 1), ftab, ((P s i):vtab), is, idxs)
 translatePVarDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 
