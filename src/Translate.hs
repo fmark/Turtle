@@ -164,11 +164,15 @@ translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is''', i
              Nothing        -> error $ "Calling undeclared function \"" ++ s ++ "\" called."
              otherwise      -> error $ "Unhandled case in function call."
 -- The desugar phase should have guarenteed we have only if-elses, not standalone ifs
-translate' (IfElse c ss1 ss2)    ftab vtab is idxs = ((IfElse c' ss1' ss2'), ftab''', vtab''', is''', idxs''')
+translate' (IfElse c ss1 ss2)    ftab vtab is idxs = ((IfElse c' ss1' ss2'), ftab''', vtab''', is'''''', idxs'''''')
     where
-      (c', ftab', vtab', is', idxs')           = translate' c ftab vtab is idxs
-      (ss1', ftab'', vtab'', is'', idxs'')     = translatePPs ss1 ftab' vtab' is' idxs'
-      (ss2', ftab''', vtab''', is''', idxs''') = translatePPs ss2 ftab'' vtab'' is'' idxs''
+      (c', ftab', vtab', is', idxs')               = translate' c ftab vtab is idxs
+      (ss1', ftab'', vtab'', is'', idxs'')         = translatePPs ss1 ftab' vtab' is' idxs'
+-- add jump to after else
+      (is''', idxs''')                             = (ap (ap is'' JumpI) (WordI 0), ((S.length is'') + 1):idxs'')
+      (ss2', ftab''', vtab''', is'''', idxs'''')   = translatePPs ss2 ftab'' vtab'' is''' idxs'''
+      (is''''', idxs''''')                         = backpatch is'''' idxs'''' (WordI (S.length is''''))
+      (is'''''', idxs'''''')                       = backpatch is''''' idxs''''' (WordI (S.length is'''))
 
 -- translate' (While c ss)          ftab vtab is = 
 -- translate' (FunCallStm f params) ftab vtab is = 
@@ -192,16 +196,17 @@ translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab',
       is'''                          = ap is'' RtsI
 
 -- Desugar phase should have guarenteed we have only Equality and LessThan comparators.
-translate' (LessThan e1 e2)      ftab vtab is idxs = ((LessThan e1' e2'), ftab'', vtab'', is'''', idxs'')
+translate' (LessThan e1 e2)      ftab vtab is idxs = ((LessThan e1' e2'), ftab'', vtab'', is'''', idxs''')
     where
       (e1', ftab', vtab', is', idxs')     = translate' e1 ftab vtab is idxs
       (e2', ftab'', vtab'', is'', idxs'') = translate' e2 ftab' vtab' is' idxs'
       is''' = is'' S.>< (S.fromList [SubI, TestI, PopI, (WordI 1), JltI])
-      is'''' = ap (ap is''' (WordI ((S.length is''') + 3))) JumpI
-      is''''' = dog muffin froop
+      is'''' = is''' S.>< (S.fromList [(WordI ((S.length is''') + 3)), JumpI, (WordI (-7))])
+      idxs''' = ((S.length is'''') - 1):idxs''
+                
 
 
---catchall - DELETE ME
+--catchall - replace with error fn when complete
 translate' pp ftab vtab is idxs = (pp, ftab, vtab, is, idxs)
 
 translateBinaryOp exp ftab vtab is idxs = (exp, ftab, vtab, (ap is'' inst), idxs)
