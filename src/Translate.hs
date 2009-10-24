@@ -243,14 +243,15 @@ translateFunDecs (pp:pps) i ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'
                   translateFD (FunDec f args vars body) i ftab vtab is idxs = 
                               if idDeclared f ftab then 
                                        error $ "Function \"" ++ f ++ "\" declared more than once."
-                              else ((FunDec f args' vars' body'), (i + 1), ftab', vtab, is'''', idxs'''')
+                              else ((FunDec f args' vars' body'), (i + 1), ftab', vtab, is''''', idxs'''')
                                    where
                                      ftab' = (F f i (length args)):ftab
                                      (args', ftab'', vtab'', is'', idxs'')         = translatePVarDecs args (-(length args)-1) ftab' vtab is idxs
                                      (vars', ftab''', vtab''', is''', idxs''')     = translateLVarDecs vars 1 ftab' vtab'' is'' idxs''
                                      -- push a pseduo-variable onto the lookup table for return statement
                                      vtab''''                                      = (P "!ret" ((-(length args)) - 2)):vtab'''
-                                     (body', ftab'''', _, is'''', idxs'''') = translatePPs body ftab' vtab'''' is''' idxs'''
+                                     (body', ftab'''', _, is'''', idxs'''')        = translatePPs body ftab' vtab'''' is''' idxs'''
+                                     is'''''                                       = ap is'''' RtsI
 translateFunDecs [] _ ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
 translateGVarDecs :: [ProgPart] -> Int -> [Symbol] -> [Symbol] ->  S.Seq Instruction -> [Int] ->
