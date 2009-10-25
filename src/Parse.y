@@ -42,7 +42,8 @@ import Data.Char (toLower)
         read                  { TBuiltin _ "read"   }
         int                   { TInt _ $$           }
         ident                 { TIdent _ $$         }
- 
+        eof                   { TEof                }
+
 %left '+' '-'
 %left '*' '/'
 %left NEG
@@ -50,7 +51,8 @@ import Data.Char (toLower)
 %%
 
 -- Program    :: { ProgPart }
-Program     : turtle ident VarDecBlock FunDecBlock CmpStm     { Prog $2 (reverse $3) (reverse $4) $5 }
+Program     : turtle ident VarDecBlock FunDecBlock CmpStm eof    { Prog $2 (reverse $3) (reverse $4) $5 }
+
 
 -- Need to parse lists in reverse order due to an implementation detail of happy
 VarDecBlock : {- empty -}                     { []                }
@@ -173,15 +175,17 @@ main = do
               hClose  hOut
     Nothing -> putStr outp
 
--- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
+-- based off boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
+-- but with added weirdness for handling unexpected EOF
 doParse :: String -> ProgPart
-doParse = parseTurtle .alexScanTokens
+doParse = parseTurtle . (\s -> (alexScanTokens s) ++ [TEof])
 
 happyError :: [Token] -> a
 happyError tks = error ("Parse error at " ++ lcn ++ "\n")
    where
    lcn = case tks of
-            []   -> "end of file"
+            []       -> "end of file"
+            (TEof:_) -> "end of file, still expecting more tokens."
             tk:_ -> "line " ++ show l ++ ", column " ++ show c
                   where
                   AlexPn _ l c = token_posn tk

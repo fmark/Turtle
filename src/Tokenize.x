@@ -51,6 +51,7 @@ data Token = TTurtle AlexPosn
            | TBuiltin AlexPosn String
            | TIdent AlexPosn String
            | TInt AlexPosn Int
+	   | TEof
        deriving (Eq,Show)
 
 token_posn (TTurtle p) = p
@@ -66,5 +67,6 @@ token_posn (TKeyword p _) = p
 token_posn (TBuiltin p _) = p
 token_posn (TIdent p _) = p
 token_posn (TInt p _) = p
+token_posn TEof = AlexPn 99 99 99
 
 }
