@@ -135,13 +135,13 @@ header = "Usage: turtle [options] [file]...\nOptions:"
 fstMode :: [Flag] -> Maybe ModeT
 fstMode (f:fs) = case f of
                    (Mode m)  -> Just m
-                   otherwise -> Nothing
+                   otherwise -> fstMode fs
 fstMode []     = Nothing
 
 fstOutp :: [Flag] -> Maybe String
 fstOutp (f:fs) = case f of
                    (Output s) -> Just s
-                   otherwise  -> Nothing
+                   otherwise  -> fstOutp fs
 fstOutp []     = Nothing
 
 --Program entry point
@@ -151,6 +151,7 @@ main = do
   (flags, nopts, errs) <- return (getOpt Permute options args)
   -- Ugh - is there a better way to have an if with no else here??
   if (length errs) > 0 then error ( concat errs ++ usageInfo header options) else putStr ""
+  putStr $ "Flags: " ++ (show flags) ++ ".  Nopts: " ++ (show nopts) ++ ".\n"
 
   -- if no input file is specified on cmd line, read from stdin.
   inp <- case (length nopts) of
