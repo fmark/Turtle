@@ -4,6 +4,10 @@ import PrettyPrint
 import Desugar
 import AbsSyn
 import Translate
+import System.Console.GetOpt
+import System.Environment
+import System.IO
+import Data.Char (toLower)
 }
 
 %name parseTurtle
@@ -108,18 +112,72 @@ Comparison : Exp "==" Exp                    { Equality $1 $3    }
            | Exp ">=" Exp                    { GreaterThanEq $1 $3 }
 
 {
+--Types and helpers for parsing the command line
+data Flag  = Mode ModeT | Output String deriving Show
+data ModeT = ParseM | DesugarM | DisasmM | BinaryM deriving (Show, Eq)
+options :: [OptDescr Flag]
+options =
+    [ Option ['o']     ["output"]  (ReqArg Output "FILE")  "output FILE"
+    , Option ['m']     ["mode"]    (ReqArg mode   "MODE")  "mode={parse|desugar|disasm|binary}"
+    ]
+    
+mode :: String -> Flag
+mode s = case s' of
+          "parse"   -> Mode ParseM
+          "desugar" -> Mode DesugarM
+          "disasm"  -> Mode DisasmM
+          "binary"  -> Mode BinaryM
+          otherwise -> error $ "Mode must be one of the following values: parse, desugar, disasm, binary"
+         where s' = map toLower s
+           
+header = "Usage: turtle [options] [file]...\nOptions:\n" ++
+                  "\t--mode={parse|desugar|disasm|binary}\n" ++
+                  "\t--ouput <file>\n"
 
+fstMode :: [Flag] -> Maybe ModeT
+fstMode (f:fs) = case f of
+                   (Mode m)  -> Just m
+                   otherwise -> Nothing
+fstMode []     = Nothing
+
+fstOutp :: [Flag] -> Maybe String
+fstOutp (f:fs) = case f of
+                   (Output s) -> Just s
+                   otherwise  -> Nothing
+fstOutp []     = Nothing
+
+--Program entry point
+main :: IO ()
+main = do
+  args <- getArgs
+  (flags, nopts, errs) <- return (getOpt Permute options args)
+  -- Ugh - is there a better way to have an if with no else here??
+  if (length errs) > 0 then error ( concat errs ++ usageInfo header options) else putStr ""
+
+  -- if no input file is specified on cmd line, read from stdin.
+  inp <- case (length nopts) of
+           0 -> getContents
+           1 -> readFile (head nopts)
+           otherwise -> error $ "Cannot specify more than one source file to compile.\n" ++ header
+
+  -- read the flags to ascertain what sort of transformation we are doing
+  outp <- case fstMode flags of
+            Just ParseM   -> return ((prettyPrint . doParse) inp) 
+            Just DesugarM -> return ((prettyPrint . desugar . doParse) inp) 
+            Just DisasmM  -> return ((prettyPrintI . translate . desugar . doParse) inp)-- translate and print instructions
+            otherwise     -> return ((unlines . (map show) . translateToBinary . translate . desugar . doParse) inp) -- translate and print instructions
+
+  -- are we outputting to a file or stdout?
+  case fstOutp flags of
+    Just s  -> do
+              hOut <- openFile s WriteMode
+              hPutStr hOut outp
+              hClose  hOut
+    Nothing -> putStr outp
 
 -- Boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
-main :: IO ()
-
---main = interact (prettyPrint . desugar . runCalc) -- just desugar and print source-code
-main = interact (unlines . (map show) . translateToBinary . translate . desugar . runCalc) -- translate and print instructions
-
-
-
-runCalc :: String -> ProgPart
-runCalc = parseTurtle .alexScanTokens
+doParse :: String -> ProgPart
+doParse = parseTurtle .alexScanTokens
 
 happyError :: [Token] -> a
 happyError tks = error ("Parse error at " ++ lcn ++ "\n")
