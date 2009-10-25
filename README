@@ -45,7 +45,7 @@ Example files to demonstrate implementation of new functionality:
 	bin/./turtle mytests/divoperator.t -m desugar
 	bin/./turtle mytests/comparators.t -m desugar
 
-Example runs to demonstrate handling of syntatic semantic errors:
+Example runs to demonstrate handling of syntatic errors:
 	$ bin/turtle mytests/garbage.t
 	turtle: lexical error
 
@@ -57,6 +57,27 @@ Example runs to demonstrate handling of syntatic semantic errors:
 
 	$ bin/turtle mytests/no-cket.t
 	turtle: Parse error at end of file, still expecting more tokens.
+
+Example runs to demonstrate handling of semantic errors:
+	$ bin/turtle mytests/global-var-redec.t 
+	turtle: Global variable "x" declared more than once.
+
+	$ bin/turtle mytests/local-param-clash.t
+	turtle: Local variable "e" is already declared as a parameter in this function.a
+
+	$ bin/turtle mytests/param-redec.t
+	turtle: Parameter "c" is already declared in this function.
+
+	$ bin/turtle mytests/local-var-redec.t
+	turtle: Local variable "e" is already declared in this function.
+
+	$ bin/turtle mytests/wrong-param-count.t
+	turtle: Function "Oops" expects 2 parameters but was called with 1 parameters.
+
+	$ bin/turtle mytests/undeclared-fun.t
+	turtle: Undeclared function "oops" called.
+
+	
 
 Author: 
 Francis Markham (u2546226)
