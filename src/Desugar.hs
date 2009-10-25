@@ -1,8 +1,7 @@
 module Desugar (desugar) where
 
--- import Data.List (intercalate)
 import AbsSyn
-import Debug.Trace
+
 
 desugar :: ProgPart -> ProgPart
 desugar (Prog s vars funcs main) = (Prog s (map desugar vars) (map desugar funcs') (map desugar main))
@@ -13,7 +12,6 @@ desugar (Prog s vars funcs main) = (Prog s (map desugar vars) (map desugar funcs
                    funcs ++ [divFunc]
                else
                    funcs
-
 -- convert all ifs to ifelses
 desugar (If c ss)          = desugar (IfElse c ss [])
 -- remove all the comparison operators we added
@@ -51,8 +49,7 @@ desugar Up                 = Up
 desugar Down               = Down
 desugar (Read s)           = Read s
 
-
-
+-- Does the program contain a division operation?
 hasDiv :: ProgPart -> Bool
 hasDiv (Prog s vars funcs main) = or ((map hasDiv vars) ++ (map hasDiv funcs) ++ (map hasDiv main))
 hasDiv (IfElse c s1s s2s) = or ((hasDiv c):((map hasDiv s1s) ++ (map hasDiv s2s)))
@@ -78,10 +75,12 @@ hasDiv (GreaterThanEq e1 e2) = (hasDiv e1) || (hasDiv e2)
 hasDiv (GreaterThan   e1 e2) = (hasDiv e1) || (hasDiv e2)
 hasDiv (LessThanEq    e1 e2) = (hasDiv e1) || (hasDiv e2)
 hasDiv (IntE n)           = False
+hasDiv (VarDecDef s)      = False
 hasDiv (IdentE v)         = False
 hasDiv Up                 = False
 hasDiv Down               = False
 hasDiv (Read s)           = False
+
 
 divFunc :: ProgPart
 -- Implements the following function from divtst.t:
