@@ -1,7 +1,11 @@
 all : src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs
+	mkdir -p bin
 	ghc -isrc -o bin/turtle --make src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs
 
-tags : src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs
+zip : src/Parse.y src/Tokenize.x src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs Makefile README runTests.sh
+	tar -zcvf turtle.tar.gz src/Parse.y src/Tokenize.x src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs Makefile README runTests.sh tests/*.t tests/*.p tests/*.d
+
+tags : src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar/hs
 	hasktags -e src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Parse.y src/Tokenize.x src/Desugar.hs
 
 src/Tokenize.hs : src/Tokenize.x
