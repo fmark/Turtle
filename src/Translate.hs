@@ -100,12 +100,12 @@ translateToBinary = map iToB
                      MulI        -> 0x1400
                      TestI       -> 0x1600
                      RtsI        -> 0x2800
-                     (LoadGP i)  -> 0x0600 + chk i
-                     (LoadFP i)  -> 0x0700 + chk i
-                     (StoreGP i) -> 0x0400 + chk i
-                     (StoreFP i) -> 0x0500 + chk i
-                     (ReadGP i)  -> 0x0200 + chk i
-                     (ReadFP i)  -> 0x0300 + chk i
+                     (LoadGP i)  -> 0x0600 + twosComp i
+                     (LoadFP i)  -> 0x0700 + twosComp i
+                     (StoreGP i) -> 0x0400 + twosComp i
+                     (StoreFP i) -> 0x0500 + twosComp i
+                     (ReadGP i)  -> 0x0200 + twosComp i
+                     (ReadFP i)  -> 0x0300 + twosComp i
                      JsrI        -> 0x6800
                      JumpI       -> 0x7000
                      JeqI        -> 0x7200
@@ -115,10 +115,12 @@ translateToBinary = map iToB
                      (WordI i)   -> i
                      otherwise   -> error $ "Unhandled instruction " ++ (show inst)
               where
-                chk i = if i > 0xFF then 
+                twosComp i = if i > 0x7F then 
                             error $ "Too many variables declared.  Cannot continue." 
-                        else
-                            i
+                        else if i < 0 then
+                                 0x100 + i
+                             else
+                                 i
 
 translate :: ProgPart -> [Instruction]
 translate p = toList (frth  (pp, ftab, vtab, is', idxs))
