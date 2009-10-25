@@ -130,9 +130,7 @@ mode s = case s' of
           otherwise -> error $ "Mode must be one of the following values: parse, desugar, disasm, binary"
          where s' = map toLower s
            
-header = "Usage: turtle [options] [file]...\nOptions:\n" ++
-                  "\t--mode={parse|desugar|disasm|binary}\n" ++
-                  "\t--ouput <file>\n"
+header = "Usage: turtle [options] [file]...\nOptions:"
 
 fstMode :: [Flag] -> Maybe ModeT
 fstMode (f:fs) = case f of

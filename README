@@ -1,5 +1,34 @@
 A Turtle compiler.  
 
+Usage: turtle [options] [file]...
+Options:
+  -o FILE  --output=FILE  output FILE
+  -m MODE  --mode=MODE    mode={parse|desugar|disasm|binary}
+
+
+Turtle can read from and write to files, or to stdin and stdout.  If
+no file is specified on the command-line, stdin is assumed for input.
+If the -o option is omitted, stdout is assumed for output.
+
+
+Turtle can produce output from various stages of the compilation
+process.  The following compilation modes are supported:
+  parse:   The input is only parsed for grammatic correctness
+  deusgar: The input is parsed, and transformed into PDPlot's core
+  	   language
+  disasm:  The input is compiled, but the result is outputted in
+  	   an assesmbly code like format
+  binary:  The compiled input is outputted in as ASCII 16-bit words
+
+If no mode is specified, binary mode is assumed.
+
+
+Examples:
+	bin/./turtle -o test0.p tests/test0.t
+	cat tests/test0.t | bin/./turtle
+	bin/./turtle -m desugar tests/test0.t
+
+
 Variations of language from specification include:
   * addition of usual comparison operators (>, >=, <=, !=)
   * allow builtin drawing functions up and down to have trailing empty parens
