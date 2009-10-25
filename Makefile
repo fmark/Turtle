@@ -5,7 +5,7 @@ bin/turtle : src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/T
 	ghc -isrc -o bin/turtle --make src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs
 
 zip : src/Parse.y src/Tokenize.x src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs Makefile README runTests.sh
-	tar -zcvf turtle.tar.gz src/Parse.y src/Tokenize.x src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs Makefile README runTests.sh tests/*.t tests/*.p tests/*.d tools/PDPlot-Haskell/PDPlot.hs tools/PDPlot-Haskell/Graphics.lhs mytests/*.t
+	tar -zcvf turtle-u2546226.tar.gz src/Parse.y src/Tokenize.x src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs Makefile README runTests.sh tests/*.t tests/*.p tests/*.d tools/PDPlot-Haskell/PDPlot.hs tools/PDPlot-Haskell/Graphics.lhs mytests/*.t
 
 test : tools/PDPlot-Haskell/PDPlot bin/turtle
 	./runTests.sh
