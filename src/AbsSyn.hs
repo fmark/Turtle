@@ -29,5 +29,5 @@ data ProgPart  =
          LessThan      ProgPart ProgPart                           |
          LessThanEq    ProgPart ProgPart                           |
          GreaterThan   ProgPart ProgPart                           |
-         GreaterThanEq ProgPart ProgPart                           |
-         Nil -- null Ctor
+         GreaterThanEq ProgPart ProgPart                          
+         deriving Show
