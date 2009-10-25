@@ -2,6 +2,9 @@ A Turtle compiler.  The turtle language is described at
 http://cs.anu.edu.au/students/comp3610.2009/assignments/Assignment2-Turtle.pdf
 
 
+To compile, type "make" at the command prompt.
+
+
 Usage: turtle [options] [file]...
 Options:
   -o FILE  --output=FILE  output FILE
@@ -77,7 +80,17 @@ Example runs to demonstrate handling of semantic errors:
 	$ bin/turtle mytests/undeclared-fun.t
 	turtle: Undeclared function "oops" called.
 
-	
+	$ bin/turtle mytests/fun-redec.t
+	turtle: Function "Oops" declared more than once.
+
+	$ bin/turtle mytests/bad-return.t
+	turtle: Return statement can only be used within a function.
+
+
+To run tests that ensure that the output of PDPlot is the same for the 
+provided, precompiled .p files as for the .p files produced by turtle, 
+type "make test" at the command prompt. 
+
 
 Author: 
 Francis Markham (u2546226)
