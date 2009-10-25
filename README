@@ -25,20 +25,38 @@ process.  The following compilation modes are supported:
 If no mode is specified, binary mode is assumed.
 
 
-Examples:
+Example usage:
 	bin/./turtle -o test0.p tests/test0.t
 	cat tests/test0.t | bin/./turtle
-	bin/./turtle -m desugar tests/test0.t
-
+	bin/./turtle -m disasm tests/test0.t
 
 Notable variations from the language specification include:
-  * addition of usual comparison operators (>, >=, <=, !=) 
-  * allow builtin drawing functions up and down to have trailing empty
-  parens 
+  * inclusion of an arithmetic division operator /
+  * inclusion of usual comparison operators (>, >=, <=, !=) 
   * functions can be called before they are declared, without the need
   for pre-declarations. 
   * whitespace is completely arbitrary - newlines are interpretted in
   the same way as spaces
+  * allow builtin drawing functions up and down to have trailing empty
+  parens 
+
+
+Example files to demonstrate implementation of new functionality:
+	bin/./turtle mytests/divoperator.t -m desugar
+	bin/./turtle mytests/comparators.t -m desugar
+
+Example runs to demonstrate handling of syntatic semantic errors:
+	$ bin/turtle mytests/garbage.t
+	turtle: lexical error
+
+	$ bin/turtle mytests/trivial-syntax-error.t
+	turtle: Parse error at line 2, column 8
+
+	$ bin/turtle mytests/vardec-in-body.t
+	turtle: Parse error at line 4, column 3
+
+	$ bin/turtle mytests/no-cket.t
+	turtle: Parse error at end of file, still expecting more tokens.
 
 Author: 
 Francis Markham (u2546226)
