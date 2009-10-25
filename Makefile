@@ -1,4 +1,4 @@
-all : tags src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs
+all : src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs
 	ghc -isrc -o bin/turtle --make src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs src/Translate.hs src/Desugar.hs
 
 tags : src/Tokenize.hs src/Parse.hs src/PrettyPrint.hs src/AbsSyn.hs
