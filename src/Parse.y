@@ -46,13 +46,11 @@ import Data.Char (toLower)
 
 %left '+' '-'
 %left '*' '/'
-%left NEG
+%left NEG -- negation has different precedence to subtraction
 
 %%
 
--- Program    :: { ProgPart }
 Program     : turtle ident VarDecBlock FunDecBlock CmpStm eof    { Prog $2 (reverse $3) (reverse $4) $5 }
-
 
 -- Need to parse lists in reverse order due to an implementation detail of happy
 VarDecBlock : {- empty -}                     { []                }
@@ -150,6 +148,7 @@ fstOutp []     = Nothing
 main :: IO ()
 main = do
   args <- getArgs
+  -- get command line options
   (flags, nopts, errs) <- return (getOpt Permute options args)
   -- Ugh - is there a better way to have an if with no else here??
   if (length errs) > 0 then error ( concat errs ++ usageInfo header options) else putStr ""
@@ -178,7 +177,7 @@ main = do
 -- based off boilerplate code from http://darcs.haskell.org/alex/examples/tiny.y
 -- but with added weirdness for handling unexpected EOF
 doParse :: String -> ProgPart
-doParse = parseTurtle . (\s -> (alexScanTokens s) ++ [TEof])
+doParse = parseTurtle . (\x -> (alexScanTokens x) ++ [TEof])
 
 happyError :: [Token] -> a
 happyError tks = error ("Parse error at " ++ lcn ++ "\n")

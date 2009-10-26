@@ -25,3 +25,4 @@ tools/PDPlot-Haskell/PDPlot : tools/PDPlot-Haskell/PDPlot.hs tools/PDPlot-Haskel
 clean :
 	find . -name "*.o" -o -name "*.hi" -o -name "*~"  | xargs rm -f
 	rm -f bin/turtle src/Tokenize.hs src/Parse.hs TAGS tools/PDPlot-Haskell/PDPlot
+

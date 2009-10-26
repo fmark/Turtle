@@ -1,17 +1,28 @@
+-- Transforms a desugarred AST into PDPlot instructions
+-- translate performs two passes.  The first does the bulk
+-- of the translation including backpatching, while the second
+-- translates function calls into a Jsr instruction.  The second
+-- pass is required to allow functions to be called before 
+-- they are declared.
 module Translate (translateToBinary, translate, prettyPrintI) where
 
 import Data.List (intersect)
 import Data.Foldable (toList)
-import Debug.Trace
 import qualified Data.Sequence as S
 import AbsSyn
 
+-- The symbols representing functions, global variables, 
+-- local variables, and parameters respectively in symbol
+-- tables
 data Symbol = F String Int Int
             | G String Int
             | L String Int
             | P String Int
               deriving Show
 
+-- A PDPlot instruction.  Two word instructions
+-- are separated into separate words, so for example,
+-- JumpI should be followed by WordI
 data Instruction = HaltI
                  | UpI
                  | DownI
@@ -29,6 +40,9 @@ data Instruction = HaltI
                  | ReadGP Int
                  | ReadFP Int
                  | JsrI
+-- JsrFirstPass is transformed in the second pass into JsrI
+-- The first param is the function name and the second is
+-- the number of parameters used in the function call
                  | JsrFirstPass String Int
                  | JumpI
                  | JeqI 
@@ -38,7 +52,7 @@ data Instruction = HaltI
                  | WordI Int
                    deriving (Show, Eq)
                  
-
+-- Is an identifier declared in a symbol table?
 idDeclared :: String -> [Symbol] -> Bool
 idDeclared sym (s:ss) = if sym == (name s) then True else idDeclared sym ss
          where
@@ -48,6 +62,7 @@ idDeclared sym (s:ss) = if sym == (name s) then True else idDeclared sym ss
            name (P s _) = s
 idDeclared _ [] = False
 
+-- Fetch the symbol matching an identifier from a symbol table
 lookupId :: String -> [Symbol] -> Maybe Symbol
 lookupId sym (s:ss) = if sym == (name s) then Just s else lookupId sym ss
          where
@@ -62,14 +77,15 @@ ap :: S.Seq a -> a -> S.Seq a
 ap as a = as S.|> a
 
 -- Appends an item to end of sequence, but only if the last item in the sequence
--- is not a duplicate of it
+-- is not a duplicate of it.  Useful for removing possibly redundant instructions
+-- such as RtsI
 apNoDup :: (Eq a) => S.Seq a -> a -> S.Seq a
 apNoDup as a = if (l > 0) && ((S.index as (l -1)) == a) then as else ap as a
                where l = S.length as
 
--- Appends [PopI, (WordI i)] to end of is.  However, if the last two
--- instructions are already pop and word, then it simply adds the two
--- word values together.  This coalesces multiple consecutive pops
+-- Appends [PopI, (WordI i)] to end of the instruction sequence.  However, if the 
+-- last two instructions are already pop and word, then it simply adds the 
+-- two word values together.  This coalesces multiple consecutive pops
 -- together into a single pop.
 -- Horrible horrible implementation.  I need to get me some haskell!
 apPopMerge :: S.Seq Instruction -> Int -> S.Seq Instruction
@@ -83,10 +99,14 @@ apPopMerge is i = if (l >= 2) && i1 == PopI && i2 == (WordI n) then
           n         = case i2 of WordI n   -> n 
                                  otherwise -> 0
 
+-- Replaces the instruction in the instruction sequence at the location
+-- on top of the index stack with the supplied instruction
 backpatch :: S.Seq Instruction -> [Int] -> Instruction -> (S.Seq Instruction, [Int])
 backpatch is (idx:idxs) i = ((S.update idx i is), idxs)
 backpatch is [] i = error "backpatch called against empty index stack"
 
+-- Transforms an instruction type to a 16 bit int as per the 
+-- PDPlot specification
 translateToBinary :: [Instruction] -> [Int]
 translateToBinary = map iToB
     where iToB inst = case inst of
@@ -122,11 +142,15 @@ translateToBinary = map iToB
                              else
                                  i
 
+-- Takes a Program and translates it into an instruction sequence
 translate :: ProgPart -> [Instruction]
 translate p = toList (frth  (pp, ftab, vtab, is', idxs))
          where 
+           -- First pass:
            (pp, ftab, vtab, is, idxs) = translate' p [] [] S.empty []
+           -- Second pass:
            is' = linkFunctionCalls is ftab
+           -- extract instruction sequence
            frth (_, _, _, a, _) = a
 
 -- A second pass that translates all JsrFirstPass calls into actual
@@ -144,7 +168,7 @@ linkFunctionCalls is ftab = case S.viewl is of
                               (x S.:< xx)                -> x S.<| (linkFunctionCalls xx ftab)
                               otherwise                -> S.empty
                                             
--- First param is input, 2nd Param is function table, 3rd param is var table
+-- Call translate' on each item in a list of ProgParts.  Should be replaced with a fold
 translatePPs :: [ProgPart] -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> ([ProgPart], [Symbol], [Symbol], S.Seq Instruction, [Int])
 translatePPs (pp:pps) ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'', idxs'') 
                 where 
@@ -152,33 +176,42 @@ translatePPs (pp:pps) ftab vtab is idxs = ((pp':pps'), ftab'', vtab'', is'', idx
                   (pps', ftab'', vtab'', is'', idxs'') = translatePPs pps ftab' vtab' is' idxs'
 translatePPs [] ftab vtab is idxs = ([], ftab, vtab, is, idxs)
 
--- First param is input, 2nd Param is function table, 3rd param is var table, 4th param is the instructions generated, 5th param is backpatch idx stack
+-- Translates a program into an instruction sequence, leaving function calls unindexed
+-- First param is an input program
+-- 2nd Param is a function symbol table 
+-- 3rd param is a variable symbol table
+-- 4th param is the sequence instructions generated so far
+-- 5th param is a stack of addresses in the instruction sequence that need backpatching
+
+-- This quintuple is essentially the program state, and is passed in and out of every
+-- call to translate'.  
 translate' :: ProgPart -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> (ProgPart, [Symbol], [Symbol], S.Seq Instruction, [Int])
 
 translate' (Prog s vars funcs main) ftab vtab is idxs = ((Prog s vars' funcs' main'), ftab'''', vtab'''', is'''''', idxs''''')
     where 
-      (vars', ftab', vtab', is', idxs')             = translateGVarDecs vars 1 ftab vtab is idxs
-      is''                                          = ap (ap is' JumpI) (WordI 0)
-      idxs''                                        = ((S.length is'') - 1):idxs'
-      (funcs', ftab''', vtab''', is''', idxs''')    = translateFunDecs funcs ftab' vtab' is'' idxs''
-      (main', ftab'''', vtab'''', is'''', idxs'''') = translatePPs main ftab''' vtab''' is''' idxs'''
-      (is''''', idxs''''') = backpatch is'''' idxs'''' (WordI (S.length is'''))
-      is'''''' = ap is''''' HaltI
+      (vars', ftab', vtab', is', idxs')             = translateGVarDecs vars 1 ftab vtab is idxs -- global variables
+      is''                                          = ap (ap is' JumpI) (WordI 0) -- jump to program body
+      idxs''                                        = ((S.length is'') - 1):idxs' -- need to backpatch jump
+      (funcs', ftab''', vtab''', is''', idxs''')    = translateFunDecs funcs ftab' vtab' is'' idxs'' -- function declarations
+      (main', ftab'''', vtab'''', is'''', idxs'''') = translatePPs main ftab''' vtab''' is''' idxs''' -- program body
+      (is''''', idxs''''') = backpatch is'''' idxs'''' (WordI (S.length is''')) -- can now backpatch jump to program body
+      is'''''' = ap is''''' HaltI --final halt instruction
 
+-- Simple translation of commands that map 1:1 to a PDPlot instruction
 translate' (Up)                  ftab vtab is idxs  = (Up, ftab, vtab, (ap is UpI), idxs)
 translate' (Down)                ftab vtab is idxs = (Down, ftab, vtab, (ap is DownI), idxs)
 translate' (MoveTo e1 e2)        ftab vtab is idxs = ((MoveTo e1' e2'), ftab, vtab, (ap is'' MoveI), idxs)
     where 
       (e1', _, _, is', _)  = translate' e1 ftab vtab is  idxs
       (e2', _, _, is'', _) = translate' e2 ftab vtab is' idxs
+-- Can only read to a variable that has been declared
 translate' (Read s)              ftab vtab is idxs = case lookupId s vtab of
                                                   Just (G _ i) -> ret (ReadGP i)
                                                   Just (L _ i) -> ret (ReadFP i)
                                                   Just (P _ i) -> ret (ReadFP i)
-                                                  Nothing      -> error $ "Cannot read to undeclared variable \"" ++ s ++ "\"."
-                                                  otherwise    -> error $ "Unhandled case"
+                                                  otherwise    -> error $ "Cannot read to undeclared variable \"" ++ s ++ "\"."
     where ret i = ((Read s), ftab, vtab, (ap is i), idxs)
--- expressions
+-- Simple expressions
 translate' (IntE i)              ftab vtab is idxs = ((IntE i), ftab, vtab, (ap (ap is LoadiI) (WordI i)), idxs)
 translate' (IdentE s)            ftab vtab is idxs = case lookupId s vtab of
                                                   Just (G _ i) -> ret (LoadGP i)
@@ -193,6 +226,8 @@ translate' (MinusE e1 e2)        ftab vtab is idxs = translateBinaryOp (MinusE e
 translate' (TimesE e1 e2)        ftab vtab is idxs = translateBinaryOp (TimesE e1 e2) ftab vtab is idxs
 translate' (NegE e1)             ftab vtab is idxs = ((NegE e1'), ftab', vtab', (ap is' NegI), idxs')
     where (e1', ftab', vtab', is', idxs') = translate' e1 ftab vtab is idxs
+-- Function calls don't lookup symbol table until the second pass, but we still generate the code
+-- to push params onto the stack, reserve return location, etc.
 translate' (FunCall s es)        ftab vtab is idxs = (fc, ftab', vtab', is'''', idxs')
     where
       is' = (ap (ap is LoadiI) (WordI 0))  -- reserve a spot on the stack for the function call result
@@ -220,10 +255,12 @@ translate' (While c ss)          ftab vtab is idxs = ((While c' ss'), ftab'', vt
       is'''                                        = ap (ap is'' JumpI) (WordI (S.length is))
       (is'''', idxs''')                            = backpatch is''' idxs'' (WordI (S.length is'''))
 
+-- A FunCallStm is a function call used for side-effects only, i.e. not as part of an expression
+-- It is processed separately because that way the return value can be cleaned off the stack
 translate' (FunCallStm f params) ftab vtab is idxs = ((FunCallStm f' params'), ftab', vtab', is'', idxs')
     where
       ((FunCall f' params'), ftab', vtab', is', idxs') = translate' (FunCall f params) ftab vtab is idxs
-      is''                                             = apPopMerge is' 1 
+      is''                                             = apPopMerge is' 1 --cleanup stack
 translate' (Compound ss)         ftab vtab is idxs = ((Compound ss'), ftab', vtab', is', idxs')
     where (ss', ftab', vtab', is', idxs') = translatePPs ss ftab vtab is idxs
 translate' (Assignment s e)      ftab vtab is idxs = ((Assignment s e'), ftab', vtab', is'', idxs')
@@ -233,8 +270,10 @@ translate' (Assignment s e)      ftab vtab is idxs = ((Assignment s e'), ftab', 
                                                   Just (G _ i) -> ap is' (StoreGP i)
                                                   Just (L _ i) -> ap is' (StoreFP i)
                                                   Just (P _ i) -> ap is' (StoreFP i)
-                                                  Nothing      -> error $ "Storing to undeclared variable \"" ++ s ++ "\"."
-                                                  otherwise    -> error $ "Unhandled case"
+                                                  otherwise    -> error $ "Storing to undeclared variable \"" ++ s ++ "\"."
+-- We use "!ret" in the symbol table as a convient place to store the location
+-- of the return value of a function.  "!ret" should be pushed onto the variable
+-- symbol table before the first instruction of an function body is translated
 translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab', is''', idxs')
     where
       (e', ftab', vtab', is', idxs') = translate' e ftab vtab is idxs
@@ -247,6 +286,7 @@ translate' (Return e)            ftab vtab is idxs = ((Return e'), ftab', vtab',
 translate' (LessThan e1 e2)      ftab vtab is idxs = translateComparator (LessThan e1 e2) ftab vtab is idxs
 translate' (Equality e1 e2)      ftab vtab is idxs = translateComparator (Equality e1 e2) ftab vtab is idxs
 
+-- Leaves a hanging index that needs to be backpatched
 translateComparator :: ProgPart -> [Symbol] -> [Symbol] -> S.Seq Instruction -> [Int] -> 
                        (ProgPart, [Symbol], [Symbol], S.Seq Instruction, [Int])
 translateComparator pp ftab vtab is idxs = (pp', ftab'', vtab'', is'''', idxs''')

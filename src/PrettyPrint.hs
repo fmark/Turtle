@@ -1,3 +1,4 @@
+-- An (ugly) pretty printer for the turtle Abstract Syntax Tree.
 module PrettyPrint (prettyPrint) where
 
 import Data.List (intercalate)

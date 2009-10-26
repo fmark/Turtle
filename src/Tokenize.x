@@ -1,4 +1,6 @@
 {
+-- An alex scanner for the turtle language.
+
 -- Use of line numbers taken from
 -- http://darcs.haskell.org/alex/examples/Tokens_posn.x
 module Tokenize (Token(..), AlexPosn(..), alexScanTokens, token_posn) where
@@ -16,7 +18,7 @@ tokens :-
   $white+                           ; -- Whitespace
   "//".*                            ; -- Comments
   turtle                            { \p s -> TTurtle p }
-  -- Comparison operators.  May contain whitespace if two char symbols
+  -- Comparison operators.  May contain whitespace between two char symbols
   \< $white* \= | \= $white* \= 
                 | \> $white* \= 
                 | \! $white* \= 
@@ -67,6 +69,6 @@ token_posn (TKeyword p _) = p
 token_posn (TBuiltin p _) = p
 token_posn (TIdent p _) = p
 token_posn (TInt p _) = p
-token_posn TEof = AlexPn 99 99 99
+token_posn TEof = AlexPn 0 0 0 -- The AlexPn of a TEof should never be displayed
 
 }

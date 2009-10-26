@@ -1,7 +1,7 @@
+-- Desugar the Abstract Syntax Tree to remove syntactic sugar
 module Desugar (desugar) where
 
 import AbsSyn
-
 
 desugar :: ProgPart -> ProgPart
 desugar (Prog s vars funcs main) = (Prog s (map desugar vars) (map desugar funcs') (map desugar main))
@@ -82,6 +82,7 @@ hasDiv Down               = False
 hasDiv (Read s)           = False
 
 
+-- The AST for a division function
 divFunc :: ProgPart
 -- Implements the following function from divtst.t:
 -- fun div (dividend, divisor)
@@ -98,7 +99,7 @@ divFunc :: ProgPart
 -- }
 
 divFunc = (FunDec 
-            "!div" 
+            "!div" -- exclamation points are used to avoid clashes with real identifiers
             ["!dividend", "!divisor"] 
             [(VarDec (Assignment "!quotient" (IntE 0)))]
             [(While (LessThan (IdentE "!divisor") (IdentE "!dividend"))
